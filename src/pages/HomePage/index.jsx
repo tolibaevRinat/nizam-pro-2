@@ -1,19 +1,52 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Lock } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import axios from 'axios'
 
 import styles from './HomePage.module.scss'
+import Loader from '../../components/Loader'
 
 const HomePage = () => {
+	const [positions, setPositions] = useState([])
+	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState(null)
+
+	const userInfo = JSON.parse(localStorage.getItem('user'))
+
+	useEffect(() => {
+		const fetchPositions = async () => {
+			try {
+				const response = await axios.get('https://kiymeshek.uz/testa2/levels')
+
+				setPositions(response.data.levels)
+			} catch (err) {
+				setError('Ma’lumotlarni yuklashda xatolik yuz berdi.')
+				console.error(err) // Xatolikni konsolga chiqarish
+			} finally {
+				setLoading(false)
+			}
+		}
+
+		fetchPositions()
+	}, [])
+
+	if (loading) {
+		return <Loader />
+	}
+
+	if (error) {
+		return <Loader text={error} />
+	}
+
 	// Данные для уровнейx
 	const levels = [
 		{
 			id: 1,
 			title: 'Tuman daraja',
 			subtitle: "Boshlang'ich daraja testlari",
-			totalLevels: 15,
-			totalPoints: 1500,
-			completedLevels: 8,
+			totalLevels: positions.length,
+			totalPoints: 500 * positions.length,
+			completedLevels: userInfo.testProgress.completedTests.length,
 			isActive: true,
 			isCompleted: false,
 		},

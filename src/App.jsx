@@ -9,20 +9,22 @@ import HomePage from './pages/HomePage'
 import ProfilePage from './pages/ProfilePage'
 import StorePage from './pages/StorePage'
 import ProtectedRoute from './components/ProtectedRoute'
+import Loader from './components/Loader'
+import PositionsPage from './pages/PositionsPage'
+import QuizPage from './pages/QuizPage'
 
 function App() {
 	// === Состояния ===
-	const [user, setUser] = useState(null) // Главное состояние для данных пользователя
-	const [loading, setLoading] = useState(true) // Состояние загрузки для проверки токена
+	const [user, setUser] = useState(null)
+	const [loading, setLoading] = useState(true)
 
-	// Состояния для формы
+	// ... (boshqa state'laringiz o'zgarishsiz qoladi)
 	const [activeTab, setActiveTab] = useState('login')
 	const [showPassword, setShowPassword] = useState(false)
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
 	const [fieldErrors, setFieldErrors] = useState({})
 	const [isVisible, setIsVisible] = useState(false)
-
 	const [loginData, setLoginData] = useState({ email: '', password: '' })
 	const [registerData, setRegisterData] = useState({
 		firstName: '',
@@ -32,43 +34,45 @@ function App() {
 		password: '',
 	})
 
-	// 1. === ГЛАВНОЕ ИЗМЕНЕНИЕ: Проверка аутентификации при загрузке приложения ===
+	// Foydalanuvchining to'liq ma'lumotini olish va saqlash uchun yordamchi funksiya
+	const fetchAndSetUser = async token => {
+		try {
+			const response = await axios.get('https://kiymeshek.uz/testa2/profile', {
+				headers: { Authorization: `Bearer ${token}` },
+			})
+			const fullUserData = response.data.user
+
+			// 1. To'liq ma'lumotni state'ga o'rnatish
+			setUser(fullUserData)
+			// 2. To'liq ma'lumotni localStorage'ga saqlash
+			localStorage.setItem('user', JSON.stringify(fullUserData))
+
+			return true
+		} catch (err) {
+			console.error('Failed to fetch profile:', err)
+			// Agar tokenda muammo bo'lsa, barcha ma'lumotlarni tozalash
+			localStorage.removeItem('token')
+			localStorage.removeItem('user')
+			setUser(null)
+			return false
+		}
+	}
+
 	useEffect(() => {
 		const checkAuth = async () => {
 			const token = localStorage.getItem('token')
 			if (token) {
-				try {
-					// Используем axios для проверки токена и получения данных пользователя
-					const response = await axios.get('https://kiymeshek.uz/testa2/profile', {
-						headers: {
-							Authorization: `Bearer ${token}`,
-						},
-					})
-
-					if (response.data && response.data.user) {
-						setUser(response.data.user) // Устанавливаем пользователя, если токен валиден
-					} else {
-						// Если ответ пришел, но пользователя нет, чистим localStorage
-						localStorage.removeItem('token')
-						localStorage.removeItem('user')
-					}
-				} catch (err) {
-					// Если запрос провалился (например, токен истек), чистим localStorage
-					console.error('Token validation failed:', err)
-					localStorage.removeItem('token')
-					localStorage.removeItem('user')
-				}
+				// To'liq ma'lumotni olib, localStorage'ni yangilaymiz
+				await fetchAndSetUser(token)
 			}
-			setLoading(false) // Завершаем загрузку после проверки
+			setLoading(false)
 		}
 
 		checkAuth()
 		setIsVisible(true)
-	}, []) // Пустой массив зависимостей, чтобы эффект выполнился один раз
+	}, []) // Bir marta ishlaydi
 
-	const validateEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-
-	// 2. === Функция выхода (Logout) ===
+	// Logout funksiyasi (o'zgarishsiz)
 	const handleLogout = async () => {
 		try {
 			const token = localStorage?.getItem?.('token')
@@ -83,14 +87,14 @@ function App() {
 		} catch (err) {
 			console.error('Logout error:', err)
 		} finally {
-			// Очищаем все данные пользователя
-			localStorage?.removeItem?.('token')
-			localStorage?.removeItem?.('user')
+			localStorage.removeItem('token')
+			localStorage.removeItem('user')
 			setUser(null)
 			setRegisterData({ username: '', firstname: '', lastname: '', email: '', password: '' })
 		}
 	}
 
+	// ### ASOSIY O'ZGARISH: `handleLogin` FUNKSIYASI ###
 	const handleLogin = async e => {
 		e.preventDefault()
 		setLoading(true)
@@ -105,15 +109,20 @@ function App() {
 		}
 
 		try {
-			const response = await axios.post('https://kiymeshek.uz/testa2/login', loginData)
+			// 1. Login qilib, tokenni olamiz
+			const loginResponse = await axios.post('https://kiymeshek.uz/testa2/login', loginData)
+			const token = loginResponse.data.token
+			localStorage.setItem('token', token)
 
-			localStorage.setItem('token', response.data.token)
-			localStorage.setItem('user', JSON.stringify(response.data.user))
+			// 2. Olingan token bilan to'liq foydalanuvchi ma'lumotini (/profile'dan) olamiz
+			const success = await fetchAndSetUser(token)
 
-			setUser(response.data.user) // Устанавливаем пользователя в состояние
-			setSuccess('Muvaffaqiyatli kirdingiz!') // Можно убрать, т.к. произойдет редирект
-
-			setTimeout(() => setLoginData({ email: '', password: '' }), 1000)
+			if (success) {
+				setSuccess('Muvaffaqiyatli kirdingiz!')
+				setTimeout(() => setLoginData({ email: '', password: '' }), 1000)
+			} else {
+				setError("Kirish muvaffaqiyatli, lekin profilni yuklab bo'lmadi.")
+			}
 		} catch (err) {
 			setError(err.response?.data?.message || "Kirish xatoligi. Ma'lumotlarni tekshiring.")
 		} finally {
@@ -121,15 +130,14 @@ function App() {
 		}
 	}
 
+	// Register funksiyasi (o'zgarishsiz)
 	const handleRegister = async e => {
 		e.preventDefault()
-		// ... (ваш код регистрации остается без изменений)
 		setLoading(true)
 		setError('')
 		setSuccess('')
 		setFieldErrors({})
 
-		// Validatsiya
 		const errors = {}
 		if (registerData.firstName.length < 2) errors.firstName = 'Ism juda qisqa'
 		if (registerData.lastName.length < 2) errors.lastName = 'Familiya juda qisqa'
@@ -149,8 +157,6 @@ function App() {
 				email: registerData.email,
 				password: registerData.password,
 			})
-
-			// Сохраняем имя/фамилию для удобства, но не логиним сразу
 			const tempUserData = {
 				firstName: registerData.firstName,
 				lastName: registerData.lastName,
@@ -160,7 +166,7 @@ function App() {
 			setSuccess("Ro'yxatdan o'tdingiz! Endi kirishingiz mumkin.")
 			setTimeout(() => {
 				setActiveTab('login')
-				setSuccess('') // Сбрасываем сообщение об успехе
+				setSuccess('')
 			}, 2000)
 
 			setRegisterData({ firstName: '', lastName: '', username: '', email: '', password: '' })
@@ -171,9 +177,10 @@ function App() {
 		}
 	}
 
-	// Пока идет проверка токена, можно показать лоадер или пустой экран
-	if (loading) {
-		return <div>Loading...</div>
+	const validateEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+	if (loading && !user) {
+		return <Loader />
 	}
 
 	return (
@@ -188,6 +195,8 @@ function App() {
 						element={<ProfilePage user={user} handleLogout={handleLogout} />}
 					/>
 					<Route path='/store' element={<StorePage />} />
+					<Route path='/positions' element={<PositionsPage />} />
+					<Route path='/quiz' element={<QuizPage />} />
 				</Route>
 
 				<Route
