@@ -1,0 +1,41 @@
+.header {
+	padding-block: 16px;
+
+	.userInfo {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+
+		.avatar {
+			width: 45px;
+			height: 45px;
+			background: #4f6ef7;
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: white;
+			font-weight: 600;
+			font-size: 18px;
+		}
+
+		.userDetails {
+			.name {
+				color: #333;
+				font-size: 18px;
+				font-weight: 600;
+				margin-bottom: 2px;
+			}
+
+			.status {
+				background: #4f6ef7;
+				color: white;
+				padding: 4px 12px;
+				border-radius: 12px;
+				font-size: 14px;
+				font-weight: 500;
+				display: inline-block;
+			}
+		}
+	}
+}
