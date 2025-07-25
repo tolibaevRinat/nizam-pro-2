@@ -1,0 +1,587 @@
+// Переменные для удобства управления
+$primary-blue: #3b82f6;
+$primary-indigo: #6366f1;
+$primary-purple: #8b5cf6;
+$primary-pink: #ec4899;
+$text-color-primary: #374151;
+$text-color-secondary: #4b5563;
+$duration-fast: 300ms;
+$duration-normal: 500ms;
+$duration-slow: 1000ms;
+
+// Миксины для переиспользуемых стилей
+@mixin flex-center($direction: row) {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: $direction;
+}
+
+@mixin gradient-text($from, $to) {
+	background-image: linear-gradient(to right, $from, $to);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+// Общие стили для страниц
+.page {
+	min-height: 100vh;
+	padding: 1.5rem;
+	transition: all $duration-normal;
+	opacity: 0;
+	transform: scale(0.95);
+	position: relative;
+	overflow: hidden;
+
+	&.visible {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	.contentWrapper {
+		width: 100%;
+		text-align: center;
+		position: relative;
+		z-index: 10;
+	}
+}
+
+// Анимации
+@keyframes pulse {
+	50% {
+		opacity: 0.5;
+	}
+}
+
+@keyframes bounce {
+	0%,
+	100% {
+		transform: translateY(-25%);
+		animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+	}
+	50% {
+		transform: translateY(0);
+		animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+	}
+}
+
+@keyframes float {
+	0%,
+	100% {
+		transform: translateY(0px) rotate(0deg);
+	}
+	50% {
+		transform: translateY(-20px) rotate(10deg);
+	}
+}
+
+@keyframes float-delayed {
+	0%,
+	100% {
+		transform: translateY(0px) rotate(0deg);
+	}
+	50% {
+		transform: translateY(-15px) rotate(-8deg);
+	}
+}
+
+@keyframes float-slow {
+	0%,
+	100% {
+		transform: translateY(0px) rotate(0deg);
+	}
+	50% {
+		transform: translateY(-10px) rotate(5deg);
+	}
+}
+
+// Стили для WelcomePage
+.welcomePage {
+	@extend .page;
+	@include flex-center(column);
+	background-image: linear-gradient(to bottom right, #eff6ff, #ffffff, #eef2ff);
+
+	.contentWrapper {
+		max-width: 28rem;
+	}
+
+	.backgroundElements {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		div {
+			position: absolute;
+			border-radius: 9999px;
+			animation-name: pulse;
+			animation-duration: 2s;
+			animation-iteration-count: infinite;
+		}
+		.el1 {
+			top: 2.5rem;
+			left: 2.5rem;
+			width: 5rem;
+			height: 5rem;
+			background-color: #dbeafe;
+			opacity: 0.3;
+		}
+		.el2 {
+			top: 8rem;
+			right: 4rem;
+			width: 4rem;
+			height: 4rem;
+			background-color: #e0e7ff;
+			opacity: 0.4;
+			animation-name: bounce;
+			animation-delay: 1s;
+		}
+		.el3 {
+			bottom: 5rem;
+			left: 5rem;
+			width: 3rem;
+			height: 3rem;
+			background-color: #e9d5ff;
+			opacity: 0.5;
+			animation-delay: 2s;
+		}
+		.el4 {
+			bottom: 10rem;
+			right: 2.5rem;
+			width: 6rem;
+			height: 6rem;
+			background-color: #eef2ff;
+			opacity: 0.3;
+			animation-name: bounce;
+			animation-delay: 3s;
+		}
+	}
+
+	.logoContainer,
+	.title,
+	.description,
+	.features,
+	.buttonContainer {
+		transition: all $duration-slow;
+	}
+
+	.logoContainer {
+		margin-bottom: 2rem;
+		transform: translateY(2.5rem) rotate(12deg);
+		opacity: 0;
+		&.visible {
+			transform: translateY(0) rotate(0);
+			opacity: 1;
+		}
+		.logo {
+			width: 6rem;
+			height: 6rem;
+			margin: 0 auto;
+			background-image: linear-gradient(to bottom right, $primary-blue, $primary-indigo);
+			border-radius: 9999px;
+			@include flex-center;
+			box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+			.icon {
+				width: 3rem;
+				height: 3rem;
+				color: white;
+			}
+		}
+	}
+
+	.title {
+		margin-bottom: 1.5rem;
+		transition-delay: 300ms;
+		transform: translateX(2.5rem);
+		opacity: 0;
+		&.visible {
+			transform: translateX(0);
+			opacity: 1;
+		}
+		h1 {
+			font-size: 2.25rem;
+			line-height: 2.5rem;
+			font-weight: 700;
+			margin-bottom: 0.5rem;
+			@include gradient-text($primary-blue, $primary-indigo);
+		}
+		.divider {
+			width: 6rem;
+			height: 4px;
+			background-image: linear-gradient(to right, $primary-blue, $primary-indigo);
+			border-radius: 9999px;
+			margin: 0 auto;
+		}
+	}
+
+	.description {
+		margin-bottom: 2rem;
+		transition-delay: 500ms;
+		transform: translateY(2rem);
+		opacity: 0;
+		&.visible {
+			transform: translateY(0);
+			opacity: 1;
+		}
+		p {
+			font-size: 1.125rem;
+			line-height: 1.75rem;
+			color: $text-color-primary;
+		}
+	}
+
+	.features {
+		margin-bottom: 2rem;
+		transition-delay: 700ms;
+		transform: scale(0.95);
+		opacity: 0;
+		&.visible {
+			transform: scale(1);
+			opacity: 1;
+		}
+		.featureItem {
+			@include flex-center;
+			color: $text-color-secondary;
+			gap: 0.75rem;
+			margin-bottom: 0.75rem;
+			.dot {
+				width: 0.5rem;
+				height: 0.5rem;
+				border-radius: 9999px;
+				animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+				&.blue {
+					background-color: $primary-blue;
+				}
+				&.indigo {
+					background-color: $primary-indigo;
+					animation-delay: 0.5s;
+				}
+				&.purple {
+					background-color: $primary-purple;
+					animation-delay: 1s;
+				}
+			}
+		}
+	}
+
+	.buttonContainer {
+		transition-delay: 1000ms;
+		transform: translateY(1.5rem) scale(0.9);
+		opacity: 0;
+		&.visible {
+			transform: translateY(0) scale(1);
+			opacity: 1;
+		}
+	}
+}
+
+// Стили для DetailPage
+.detailPage {
+	@extend .page;
+	@include flex-center(column);
+	background-image: linear-gradient(to bottom right, #eef2ff, #ffffff, #dbeafe);
+
+	.contentWrapper {
+		max-width: 32rem;
+	}
+
+	.backgroundElements {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		div {
+			position: absolute;
+			border-radius: 9999px;
+			opacity: 0.2;
+		}
+		.el1 {
+			top: 4rem;
+			left: 2rem;
+			width: 8rem;
+			height: 8rem;
+			background-image: linear-gradient(to bottom right, #dbeafe, #e0e7ff);
+			animation: float 6s ease-in-out infinite;
+		}
+		.el2 {
+			top: 10rem;
+			right: 3rem;
+			width: 5rem;
+			height: 5rem;
+			background-image: linear-gradient(to bottom right, #e9d5ff, #fbcfe8);
+			opacity: 0.3;
+			animation: float-delayed 8s ease-in-out infinite;
+			animation-delay: 2s;
+		}
+		.el3 {
+			bottom: 8rem;
+			left: 4rem;
+			width: 7rem;
+			height: 7rem;
+			background-image: linear-gradient(to bottom right, #e0e7ff, #dbeafe);
+			opacity: 0.25;
+			animation: float-slow 10s ease-in-out infinite;
+			animation-delay: 4s;
+		}
+	}
+
+	.header {
+		margin-bottom: 2rem;
+		transition: all $duration-slow;
+		transform: translateY(2rem);
+		opacity: 0;
+		&.visible {
+			transform: translateY(0);
+			opacity: 1;
+		}
+		h1 {
+			font-size: 1.875rem;
+			line-height: 2.25rem;
+			font-weight: 700;
+			color: $text-color-primary;
+			margin-bottom: 1rem;
+		}
+		h2 {
+			font-size: 1.5rem;
+			line-height: 2rem;
+			font-weight: 600;
+			@include gradient-text($primary-pink, $primary-purple);
+		}
+	}
+
+	.rulesContainer {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+		text-align: left;
+	}
+
+	.ruleCard {
+		background-color: rgba(255, 255, 255, 0.7);
+		backdrop-filter: blur(4px);
+		border-radius: 1rem;
+		padding: 1.5rem;
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.5);
+		transition: all $duration-slow;
+		opacity: 0;
+		h3 {
+			font-size: 1.125rem;
+			line-height: 1.75rem;
+			font-weight: 700;
+			margin-bottom: 0.75rem;
+			@include flex-center(row);
+			justify-content: flex-start;
+			.dot {
+				width: 0.5rem;
+				height: 0.5rem;
+				border-radius: 9999px;
+				margin-right: 0.5rem;
+				animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+			}
+		}
+		p {
+			color: $text-color-primary;
+			line-height: 1.75;
+		}
+
+		// Специфичные для карточек стили
+		&.maqsad {
+			transition-delay: 200ms;
+			transform: translateX(2.5rem) rotate(1deg);
+			&.visible {
+				transform: translateX(0) rotate(0);
+				opacity: 1;
+			}
+			h3 {
+				color: $primary-pink;
+			}
+			.dot {
+				background-color: $primary-pink;
+			}
+		}
+		&.shartlar {
+			transition-delay: 400ms;
+			transform: translateX(-2.5rem) rotate(-1deg);
+			&.visible {
+				transform: translateX(0) rotate(0);
+				opacity: 1;
+			}
+			h3 {
+				color: $primary-blue;
+			}
+			.dot {
+				background-color: $primary-blue;
+			}
+		}
+		&.test {
+			transition-delay: 600ms;
+			transform: scale(0.95);
+			&.visible {
+				transform: scale(1);
+				opacity: 1;
+			}
+			h3 {
+				color: $primary-indigo;
+			}
+			.dot {
+				background-color: $primary-indigo;
+			}
+		}
+		&.otish {
+			transition-delay: 800ms;
+			transform: translateY(2rem);
+			&.visible {
+				transform: translateY(0);
+				opacity: 1;
+			}
+			h3 {
+				color: $primary-purple;
+			}
+			.dot {
+				background-color: $primary-purple;
+			}
+		}
+
+		&.yulduzlar {
+			transition-delay: 1000ms;
+			transform: translateX(2.5rem);
+			&.visible {
+				transform: translateX(0);
+				opacity: 1;
+			}
+			h3 {
+				color: #16a34a;
+			} // green
+			.dot {
+				background-color: #16a34a;
+			}
+		}
+
+		&.ishlatish {
+			transition-delay: 1200ms;
+			transform: translateY(1.5rem) scale(0.95);
+			&.visible {
+				transform: translateY(0) scale(1);
+				opacity: 1;
+			}
+			h3 {
+				color: #ea580c;
+			} // orange
+			.dot {
+				background-color: #ea580c;
+			}
+		}
+	}
+
+	.buttonContainer {
+		margin-top: 2rem;
+		transition: all $duration-slow;
+		transition-delay: 1400ms;
+		transform: translateY(2rem) scale(0.9);
+		opacity: 0;
+		&.visible {
+			transform: translateY(0) scale(1);
+			opacity: 1;
+		}
+	}
+}
+
+// Общие стили для кнопки
+.button {
+	width: 100%;
+	color: white;
+	padding: 1rem 2rem;
+	border-radius: 0.75rem;
+	font-size: 1.125rem;
+	line-height: 1.75rem;
+	font-weight: 600;
+	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+	transform: scale(1);
+	transition: all $duration-fast;
+	position: relative;
+	overflow: hidden;
+	border: none;
+	cursor: pointer;
+
+	&:hover {
+		box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+		transform: scale(1.05);
+		.arrow {
+			transform: translate(-50%, -50%) translateX(0.25rem);
+		}
+		.hoverEffect {
+			opacity: 1;
+		}
+	}
+
+	.content {
+		position: relative;
+		z-index: 10;
+	}
+
+	.hoverEffect {
+		position: absolute;
+		inset: 0;
+		background-image: linear-gradient(to right, rgba(255, 255, 255, 0.2), transparent);
+		opacity: 0;
+		transition: opacity $duration-fast;
+	}
+
+	.arrow {
+		position: absolute;
+		right: 1rem;
+		top: 50%;
+		transform: translateY(-50%) translateX(-50%);
+		transition: transform $duration-fast;
+		.icon {
+			width: 1.25rem;
+			height: 1.25rem;
+		}
+	}
+}
+
+.welcomeButton {
+	@extend .button;
+	background-image: linear-gradient(to right, $primary-blue, $primary-indigo);
+	&:hover {
+		background-image: linear-gradient(to right, #2563eb, #4f46e5);
+	}
+}
+
+.detailButton {
+	@extend .button;
+	background-image: linear-gradient(to right, $primary-purple, $primary-pink);
+	&:hover {
+		background-image: linear-gradient(to right, #7e22ce, #db2777);
+	}
+}
+
+// Стили для App компонента
+.appContainer {
+	min-height: 100vh;
+	background-color: #f3f4f6;
+	@include flex-center;
+	.content {
+		text-align: center;
+		h1 {
+			font-size: 1.5rem;
+			line-height: 2rem;
+			font-weight: 700;
+			color: $text-color-primary;
+			margin-bottom: 1rem;
+		}
+		p {
+			color: $text-color-secondary;
+		}
+		.button {
+			margin-top: 1rem;
+			background-color: $primary-blue;
+			color: white;
+			padding: 0.5rem 1.5rem;
+			border-radius: 0.5rem;
+			transition: background-color $duration-fast;
+			&:hover {
+				background-color: #2563eb;
+			}
+		}
+	}
+}

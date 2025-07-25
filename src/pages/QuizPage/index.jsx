@@ -13,10 +13,57 @@ const QuizPage = () => {
 	const [showResults, setShowResults] = useState(false)
 	const [testResults, setTestResults] = useState(null)
 	const [submitting, setSubmitting] = useState(false)
+	const [debugMode, setDebugMode] = useState(false)
 
-	// Получение токена из localStorage (или где у тебя хранится)
+	// Тестовые данные для отладки
+	const mockTestData = {
+		message: 'Test daraja uchun sinov',
+		level: 'Test daraja',
+		questions: [
+			{
+				title: 'React dasturlash tilida state nima?',
+				variants: [
+					"Komponentning o'zgaruvchan ma'lumotlari",
+					"Komponentning doimiy ma'lumotlari",
+					"Komponentning stil ma'lumotlari",
+					"Komponentning import ma'lumotlari",
+				],
+				id: 0,
+			},
+			{
+				title: 'useState hook nima uchun ishlatiladi?',
+				variants: [
+					"Ma'lumotlarni saqlash uchun",
+					'Komponentning holatini boshqarish uchun',
+					"API ga so'rov yuborish uchun",
+					"Stillarni o'zgartirish uchun",
+				],
+				id: 1,
+			},
+		],
+		totalQuestions: 2,
+		passingScore: 1,
+	}
+
+	// Функция для загрузки тестовых данных
+	const loadMockData = () => {
+		setQuizData(mockTestData)
+		setQuestions(mockTestData.questions)
+		setLoading(false)
+		setError(null)
+		setDebugMode(true)
+	}
+
+	// Получение токена из localStorage (адаптируй под свою систему авторизации)
 	const getToken = () => {
-		return localStorage.getItem('authToken') // Адаптируй под свою систему авторизации
+		// Проверяем разные возможные места хранения токена
+		const token =
+			localStorage.getItem('authToken') ||
+			localStorage.getItem('token') ||
+			localStorage.getItem('accessToken') ||
+			sessionStorage.getItem('authToken')
+
+		return token
 	}
 
 	// Загрузка текущего теста
@@ -27,10 +74,13 @@ const QuizPage = () => {
 	const fetchCurrentTest = async () => {
 		try {
 			setLoading(true)
+			setError(null)
+
 			const token = getToken()
 
 			if (!token) {
-				setError('Необходимо войти в систему')
+				setError('Tizimga kirishingiz kerak. Avtorizatsiya tokeni topilmadi.')
+				setLoading(false)
 				return
 			}
 
@@ -43,18 +93,34 @@ const QuizPage = () => {
 			})
 
 			if (!response.ok) {
-				const errorData = await response.json()
-				throw new Error(errorData.message || 'Ошибка загрузки теста')
+				let errorMessage = `Ошибка сервера: ${response.status}`
+
+				try {
+					const errorData = await response.json()
+					errorMessage = errorData.message || errorMessage
+				} catch (e) {}
+
+				throw new Error(errorMessage)
 			}
 
 			const data = await response.json()
-			console.log(data)
+
+			if (!data.questions || !Array.isArray(data.questions)) {
+				throw new Error('Получены некорректные данные теста')
+			}
+
+			if (data.questions.length === 0) {
+				setError('Нет доступных вопросов для теста')
+				setLoading(false)
+				return
+			}
 
 			setQuizData(data)
 			setQuestions(data.questions)
 			setLoading(false)
 		} catch (err) {
-			setError(err.message)
+			console.error('💥 Ошибка при загрузке теста:', err)
+			setError(`Ошибка загрузки: ${err.message}`)
 			setLoading(false)
 		}
 	}
@@ -118,8 +184,8 @@ const QuizPage = () => {
 
 	const closeModal = () => {
 		setShowResults(false)
-		// Можно добавить редирект или сброс состояния
-		window.location.reload() // Или используй роутер для перехода
+		// Перенаправляем на страницу /positions
+		window.location.href = '/positions'
 	}
 
 	const retryTest = () => {
@@ -137,21 +203,43 @@ const QuizPage = () => {
 			<div className={`${styles.container} middle`}>
 				<div className={styles.loadingContainer}>
 					<div className={styles.spinner}></div>
-					<p>Testlar yuklanmoqta</p>
+					<p>Загрузка теста...</p>
 				</div>
 			</div>
 		)
+	}
+
+	// Тестовая функция для проверки API без токена
+	const testApiConnection = async () => {
+		try {
+			const response = await fetch('https://kiymeshek.uz/testa2/levels')
+
+			if (response.ok) {
+				const data = await response.json()
+				alert('API доступен! Проблема скорее всего в токене авторизации.')
+			} else {
+				alert('API недоступен. Проверьте подключение к интернету.')
+			}
+		} catch (error) {
+			console.error('💥 Ошибка подключения к API:', error)
+			alert(`Ошибка подключения: ${error.message}`)
+		}
 	}
 
 	if (error) {
 		return (
 			<div className={`${styles.container} middle`}>
 				<div className={styles.errorContainer}>
-					<h3>Ошибка</h3>
+					<h3>Xatolik yuz berdi</h3>
 					<p>{error}</p>
-					<button onClick={fetchCurrentTest} className={styles.retryButton}>
-						Попробовать снова
-					</button>
+					<div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+						<button onClick={fetchCurrentTest} className={styles.retryButton}>
+							Qayta urinish
+						</button>
+						<button onClick={loadMockData} className={styles.retryButton}>
+							Test rejimi
+						</button>
+					</div>
 				</div>
 			</div>
 		)
@@ -161,8 +249,11 @@ const QuizPage = () => {
 		return (
 			<div className={`${styles.container} middle`}>
 				<div className={styles.noTestContainer}>
-					<h3>Тест недоступен</h3>
-					<p>В данный момент нет доступных тестов</p>
+					<h3>Test mavjud emas</h3>
+					<p>Hozirda mavjud testlar yo'q yoki siz eng yuqori darajaga erishdingiz</p>
+					<button onClick={fetchCurrentTest} className={styles.retryButton}>
+						Qayta yuklash
+					</button>
 				</div>
 			</div>
 		)
@@ -183,7 +274,12 @@ const QuizPage = () => {
 
 				<div className={styles.quizCard}>
 					<div className={styles.cardHeader}>
-						<h2>{quizData?.level || 'Тест'}</h2>
+						<h2>
+							{quizData?.level || 'Test'}
+							{debugMode && (
+								<span style={{ color: '#ff6b6b', fontSize: '14px' }}> (Test rejimi)</span>
+							)}
+						</h2>
 						<span className={styles.subtitle}>{quizData?.message}</span>
 					</div>
 
@@ -216,7 +312,7 @@ const QuizPage = () => {
 								onClick={handleNextQuestion}
 								disabled={submitting}
 							>
-								{submitting ? 'Отправка...' : isLastQuestion ? 'Завершить тест' : 'Davom etish'}
+								{submitting ? 'Yuborish...' : isLastQuestion ? 'Sinovni yakunlang' : 'Davom etish'}
 							</button>
 						</div>
 					)}
@@ -228,27 +324,27 @@ const QuizPage = () => {
 				<div className={modalStyles.modalOverlay}>
 					<div className={modalStyles.modalContent}>
 						<div className={modalStyles.modalHeader}>
-							<h2>{testResults.passed ? '🎉 Поздравляем!' : '😔 Тест не пройден'}</h2>
+							<h2>{testResults.passed ? '🎉 Tabriklaymiz!' : '😔 Sinov muvaffaqiyatsiz tugadi'}</h2>
 						</div>
 
 						<div className={modalStyles.resultsContainer}>
 							<div className={modalStyles.scoreSection}>
 								<div className={modalStyles.scoreItem}>
-									<span className={modalStyles.label}>Правильных ответов:</span>
+									<span className={modalStyles.label}>To'g'ri javoblar:</span>
 									<span className={modalStyles.value}>
 										{testResults.score} из {testResults.totalQuestions}
 									</span>
 								</div>
 
 								<div className={modalStyles.scoreItem}>
-									<span className={modalStyles.label}>Набранные баллы:</span>
+									<span className={modalStyles.label}>Olingan ballar:</span>
 									<span className={modalStyles.value}>
 										{testResults.score * 100} из {testResults.totalQuestions * 100}
 									</span>
 								</div>
 
 								<div className={modalStyles.scoreItem}>
-									<span className={modalStyles.label}>Процент:</span>
+									<span className={modalStyles.label}>Foiz:</span>
 									<span className={modalStyles.value}>
 										{Math.round((testResults.score / testResults.totalQuestions) * 100)}%
 									</span>
@@ -257,7 +353,7 @@ const QuizPage = () => {
 
 							{testResults.passed && testResults.newLevel && (
 								<div className={modalStyles.levelUpSection}>
-									<h3>🚀 Новый уровень достигнут!</h3>
+									<h3>🚀 Yangi lavozim ochildi!</h3>
 									<p className={modalStyles.newLevel}>{testResults.newLevel}</p>
 								</div>
 							)}
@@ -265,14 +361,14 @@ const QuizPage = () => {
 							<div className={modalStyles.nextTestSection}>
 								<p>
 									{testResults.canTakeNextTest
-										? '✅ Вы можете пройти следующий тест!'
-										: '⏳ Следующий тест будет доступен позже'}
+										? '✅ Siz keyingi testni topshirishingiz mumkin!'
+										: '⏳ Keyingi test keyinroq taqdim etiladi.'}
 								</p>
 							</div>
 
 							{/* Детальные результаты по вопросам */}
 							<div className={modalStyles.detailsSection}>
-								<h4>Детальные результаты:</h4>
+								<h4>Batafsil natijalar:</h4>
 								<div className={modalStyles.questionResults}>
 									{testResults.results?.map((result, index) => (
 										<div
@@ -281,7 +377,7 @@ const QuizPage = () => {
 												result.correct ? modalStyles.correct : modalStyles.incorrect
 											}`}
 										>
-											<span>Вопрос {index + 1}</span>
+											<span>Savol {index + 1}</span>
 											<span>{result.correct ? '✅' : '❌'}</span>
 										</div>
 									))}
@@ -291,12 +387,12 @@ const QuizPage = () => {
 
 						<div className={modalStyles.modalActions}>
 							<button className={modalStyles.primaryButton} onClick={closeModal}>
-								{testResults.canTakeNextTest ? 'К следующему тесту' : 'Закрыть'}
+								{testResults.canTakeNextTest ? 'Keyingi test' : 'Yopish'}
 							</button>
 
 							{!testResults.passed && (
 								<button className={modalStyles.secondaryButton} onClick={retryTest}>
-									Попробовать снова
+									Yana urinib korish
 								</button>
 							)}
 						</div>

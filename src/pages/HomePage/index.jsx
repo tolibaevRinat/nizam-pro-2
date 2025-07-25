@@ -112,8 +112,12 @@ const HomePage = () => {
 										<span className={styles.statValue}>{level.totalLevels}</span>
 									</div>
 									<div className={styles.stat}>
-										<span className={styles.statLabel}>Jami balllar:</span>
+										<span className={styles.statLabel}>Jami ballar:</span>
 										<span className={styles.statValue}>{level.totalPoints}</span>
+									</div>
+									<div className={styles.stat}>
+										<span className={styles.statLabel}>Yig'ilgan ballar:</span>
+										<span className={styles.statValue}>{level.completedLevels * 500}</span>
 									</div>
 								</div>
 

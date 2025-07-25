@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -12,13 +12,15 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Loader from './components/Loader'
 import PositionsPage from './pages/PositionsPage'
 import QuizPage from './pages/QuizPage'
+import IntroPages from './pages/IntroPages' // Новый компонент
 
 function App() {
 	// === Состояния ===
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(true)
+	const [showIntro, setShowIntro] = useState(false) // Новое состояние
 
-	// ... (boshqa state'laringiz o'zgarishsiz qoladi)
+	// ... (остальные state'ы остаются без изменений)
 	const [activeTab, setActiveTab] = useState('login')
 	const [showPassword, setShowPassword] = useState(false)
 	const [error, setError] = useState('')
@@ -34,7 +36,27 @@ function App() {
 		password: '',
 	})
 
-	// Foydalanuvchining to'liq ma'lumotini olish va saqlash uchun yordamchi funksiya
+	const navigate = useNavigate()
+
+	// Функция для проверки первого визита
+	const checkFirstVisit = () => {
+		const hasVisited = localStorage.getItem('hasVisitedBefore')
+		const token = localStorage.getItem('token')
+
+		// Показываем intro только если пользователь впервые заходит и не авторизован
+		if (!hasVisited && !token) {
+			setShowIntro(true)
+		}
+	}
+
+	// Функция завершения intro
+	const handleIntroComplete = () => {
+		setShowIntro(false)
+		localStorage.setItem('hasVisitedBefore', 'true')
+		navigate('/auth')
+	}
+
+	// Фoydalanuvчining to'liq ma'lumotini olish va saqlash uchun yordamchi funksiya
 	const fetchAndSetUser = async token => {
 		try {
 			const response = await axios.get('https://kiymeshek.uz/testa2/profile', {
@@ -60,6 +82,9 @@ function App() {
 
 	useEffect(() => {
 		const checkAuth = async () => {
+			// Сначала проверяем первый визит
+			checkFirstVisit()
+
 			const token = localStorage.getItem('token')
 			if (token) {
 				// To'liq ma'lumotni olib, localStorage'ni yangilaymiz
@@ -178,6 +203,11 @@ function App() {
 	}
 
 	const validateEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+	// Показываем intro страницы если нужно
+	if (showIntro) {
+		return <IntroPages onComplete={handleIntroComplete} />
+	}
 
 	if (loading && !user) {
 		return <Loader />

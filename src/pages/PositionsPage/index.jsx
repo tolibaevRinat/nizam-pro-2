@@ -16,19 +16,19 @@ const PositionsPage = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				// Получаем токен из localStorage
+				// localStorage dan tokenni olish
 				const token = localStorage.getItem('token')
 				if (!token) {
-					setError('Авторизация требуется')
+					setError('Avtorizatsiya talab qilinadi')
 					setLoading(false)
 					return
 				}
 
-				// Получаем список уровней
+				// Darajalar ro'yxatini olish
 				const levelsResponse = await fetch('https://kiymeshek.uz/testa2/levels')
 				const levelsData = await levelsResponse.json()
 
-				// Получаем профиль пользователя
+				// Foydalanuvchi profilini olish
 				const profileResponse = await fetch('https://kiymeshek.uz/testa2/profile', {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -53,63 +53,60 @@ const PositionsPage = () => {
 		fetchData()
 	}, [])
 
-	// Функция для определения статуса уровня
+	// Daraja holatini aniqlash funksiyasi (kutishsiz)
 	const getLevelStatus = (level, index) => {
 		if (!userProfile || !userProfile.testProgress) {
 			return 'locked'
 		}
 
-		const { currentLevel, completedTests, canTakeTest } = userProfile.testProgress
-		const currentLevelIndex = levels.indexOf(currentLevel)
+		const { currentLevel, completedTests } = userProfile.testProgress
+		const currentLevelIndex = levels.findIndex(l => l === currentLevel)
 
-		// Если это текущий уровень пользователя - он должен быть доступен для прохождения
+		// Agar bu joriy daraja bo'lsa - uni topshirish mumkin
 		if (level === currentLevel) {
-			return canTakeTest ? 'current' : 'waiting'
+			return 'current'
 		}
 
-		// Если уровень был пройден (находится в completedTests)
-		if (completedTests.some(test => test.level === level)) {
+		// Agar daraja o'tilgan bo'lsa (completedTests da bor)
+		if (completedTests && completedTests.some(test => test.level === level)) {
 			return 'completed'
 		}
 
-		// Если это уровень ниже текущего - он должен быть пройден
+		// Agar bu joriy darajadan past bo'lsa - u o'tilgan bo'lishi kerak
 		if (index < currentLevelIndex) {
 			return 'completed'
 		}
 
-		// Все уровни выше текущего заблокированы
-		if (index > currentLevelIndex) {
-			return 'locked'
+		// Agar bu keyingi daraja bo'lsa (joriy darajadan bir daraja yuqori)
+		if (index === currentLevelIndex + 1) {
+			return 'available'
 		}
 
-		// Все остальные случаи - заблокированы
+		// Qolgan barcha darajalar bloklangan
 		return 'locked'
 	}
 
-	// Получение описания для уровня
+	// Daraja uchun tavsif olish
 	const getLevelDescription = (level, status) => {
 		const descriptions = {
-			current: "Bu darajani o'tish kerak",
+			current: "Hozir shu darajani o'tish kerak",
+			available: 'Keyingi daraja - topshirish mumkin',
 			completed: "O'tilgan daraja",
-			waiting: 'Kutish vaqti tugamagan',
-			locked: "Oldingi darajalarni o'ting",
+			locked: "Oldingi darajalarni tugatib, bu darajaga o'ting",
 		}
 		return descriptions[status] || "Daraja haqida ma'lumot"
 	}
 
 	const handleClick = (level, status) => {
-		if (status === 'current') {
-			// Сохраняем выбранный уровень и переходим к тесту
+		if (status === 'current' || status === 'available') {
+			// Tanlangan darajani saqlash va testga o'tish
 			localStorage.setItem('selectedLevel', level)
 			navigate('/quiz')
 		}
-		// Для completed уровней можно добавить повторное прохождение при необходимости
+		// O'tilgan darajalarni qayta topshirish imkoniyati
 		else if (status === 'completed') {
-			// Можно добавить подтверждение для повторного прохождения
-			if (window.confirm('Вы хотите пройти этот тест повторно?')) {
-				localStorage.setItem('selectedLevel', level)
-				navigate('/quiz')
-			}
+			localStorage.setItem('selectedLevel', level)
+			navigate('/quiz')
 		}
 	}
 
@@ -120,8 +117,6 @@ const PositionsPage = () => {
 			case 'current':
 			case 'available':
 				return <Play className={styles.playIcon} size={20} />
-			case 'waiting':
-				return <Lock className={styles.waitingIcon} size={20} />
 			case 'locked':
 			default:
 				return <Lock className={styles.lockIcon} size={20} />
@@ -139,6 +134,15 @@ const PositionsPage = () => {
 						Test topshirish
 					</button>
 				)
+			case 'available':
+				return (
+					<button
+						onClick={() => handleClick(level, status)}
+						className={`${styles.actionButton} ${styles.availableButton}`}
+					>
+						Boshlash
+					</button>
+				)
 			case 'completed':
 				return (
 					<button
@@ -148,8 +152,6 @@ const PositionsPage = () => {
 						Qayta topshirish
 					</button>
 				)
-			case 'waiting':
-				return <span className={styles.waitingText}>Kutish vaqti</span>
 			case 'locked':
 			default:
 				return renderLevelIcon(status)
