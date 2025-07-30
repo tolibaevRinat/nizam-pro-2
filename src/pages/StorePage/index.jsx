@@ -22,7 +22,7 @@ const StorePage = () => {
 	// В реальном проекте замените на localStorage
 	const [userPoints, setUserPoints] = useState(() => {
 		// Раскомментируйте для работы с localStorage:
-		return parseInt(localStorage.getItem('userTotalPoints')) || 1250
+		return parseInt(localStorage.getItem('userTotalPoints')) || 0
 	})
 
 	const [purchasedItems, setPurchasedItems] = useState(() => {
