@@ -12,7 +12,7 @@ const HomePage = () => {
 	const [error, setError] = useState(null)
 
 	const userInfo = JSON.parse(localStorage.getItem('user'))
-	const totalPoints = localStorage.getItem('userTotalPoints')
+	const totalPoints = localStorage.getItem('userTotalPoints') && 0
 
 	useEffect(() => {
 		const fetchPositions = async () => {
