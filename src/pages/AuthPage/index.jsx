@@ -81,7 +81,7 @@ const AuthPage = ({
 							<Sparkles className={styles.sparkle1} />
 							<Sparkles className={styles.sparkle2} />
 						</div>
-						<h1 className={styles.title}>Kiymeshek</h1>
+						<h1 className={styles.title}>Karera Moduli</h1>
 						<p className={styles.subtitle}>Xush kelibsiz!</p>
 					</div>
 
