@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import styles from './QuizPage.module.scss'
 import modalStyles from './QuizModal.module.scss'
 
@@ -13,46 +13,98 @@ const QuizPage = () => {
 	const [showResults, setShowResults] = useState(false)
 	const [testResults, setTestResults] = useState(null)
 	const [submitting, setSubmitting] = useState(false)
-	const [debugMode, setDebugMode] = useState(false)
+	const [totalPoints, setTotalPoints] = useState(0)
 
-	// Тестовые данные для отладки
-	const mockTestData = {
-		message: 'Test daraja uchun sinov',
-		level: 'Test daraja',
-		questions: [
-			{
-				title: 'React dasturlash tilida state nima?',
-				variants: [
-					"Komponentning o'zgaruvchan ma'lumotlari",
-					"Komponentning doimiy ma'lumotlari",
-					"Komponentning stil ma'lumotlari",
-					"Komponentning import ma'lumotlari",
-				],
-				id: 0,
-			},
-			{
-				title: 'useState hook nima uchun ishlatiladi?',
-				variants: [
-					"Ma'lumotlarni saqlash uchun",
-					'Komponentning holatini boshqarish uchun',
-					"API ga so'rov yuborish uchun",
-					"Stillarni o'zgartirish uchun",
-				],
-				id: 1,
-			},
-		],
-		totalQuestions: 2,
-		passingScore: 1,
+	// Новые состояния для таймера
+	const [showTimer, setShowTimer] = useState(false)
+	const [timeLeft, setTimeLeft] = useState(90) // 1 мин 30 сек = 90 секунд
+	const [isTimerRunning, setIsTimerRunning] = useState(false)
+	const timerRef = useRef(null)
+
+	// Константа для очков за правильный ответ
+	const POINTS_PER_CORRECT_ANSWER = 50
+
+	// Функции для работы с очками в localStorage
+	const getTotalPointsFromStorage = () => {
+		try {
+			const points = localStorage.getItem('userTotalPoints')
+			return points ? parseInt(points, 10) : 0
+		} catch (error) {
+			console.error('Ошибка при получении очков из localStorage:', error)
+			return 0
+		}
 	}
 
-	// Функция для загрузки тестовых данных
-	const loadMockData = () => {
-		setQuizData(mockTestData)
-		setQuestions(mockTestData.questions)
-		setLoading(false)
-		setError(null)
-		setDebugMode(true)
+	const saveTotalPointsToStorage = points => {
+		try {
+			localStorage.setItem('userTotalPoints', points.toString())
+		} catch (error) {
+			console.error('Ошибка при сохранении очков в localStorage:', error)
+		}
 	}
+
+	const addPointsToTotal = newPoints => {
+		const currentTotal = getTotalPointsFromStorage()
+		const updatedTotal = currentTotal + newPoints
+		saveTotalPointsToStorage(updatedTotal)
+		setTotalPoints(updatedTotal)
+		return updatedTotal
+	}
+
+	// Функции для работы с таймером
+	const startTimer = () => {
+		setTimeLeft(90) // Сбрасываем на 1 мин 30 сек
+		setShowTimer(true)
+		setIsTimerRunning(true)
+		setError(null) // Скрываем ошибку
+		setLoading(false) // Останавливаем загрузку
+
+		timerRef.current = setInterval(() => {
+			setTimeLeft(prevTime => {
+				if (prevTime <= 1) {
+					// Таймер закончился
+					clearInterval(timerRef.current)
+					setIsTimerRunning(false)
+					setShowTimer(false)
+					// Автоматически пытаемся загрузить тест
+					fetchCurrentTest()
+					return 0
+				}
+				return prevTime - 1
+			})
+		}, 1000)
+	}
+
+	const stopTimer = () => {
+		if (timerRef.current) {
+			clearInterval(timerRef.current)
+			timerRef.current = null
+		}
+		setIsTimerRunning(false)
+		setShowTimer(false)
+	}
+
+	// Форматирование времени для отображения
+	const formatTime = seconds => {
+		const minutes = Math.floor(seconds / 60)
+		const remainingSeconds = seconds % 60
+		return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+	}
+
+	// Загрузка очков при инициализации компонента
+	useEffect(() => {
+		const points = getTotalPointsFromStorage()
+		setTotalPoints(points)
+	}, [])
+
+	// Очистка таймера при размонтировании компонента
+	useEffect(() => {
+		return () => {
+			if (timerRef.current) {
+				clearInterval(timerRef.current)
+			}
+		}
+	}, [])
 
 	// Получение токена из localStorage (адаптируй под свою систему авторизации)
 	const getToken = () => {
@@ -75,6 +127,7 @@ const QuizPage = () => {
 		try {
 			setLoading(true)
 			setError(null)
+			stopTimer() // Останавливаем таймер если он работает
 
 			const token = getToken()
 
@@ -93,6 +146,15 @@ const QuizPage = () => {
 			})
 
 			if (!response.ok) {
+				// Проверяем, если это ошибка 400 - запускаем таймер
+				if (response.status === 400) {
+					console.log('🕐 Получена ошибка 400, пользователь должен подождать')
+					setError(
+						"Siz oldingi testni yaqinda topshirgansiz. 1 daqiqa 30 soniya kutib, qaytadan urinib ko'ring."
+					)
+					setLoading(false)
+					return
+				}
 				let errorMessage = `Ошибка сервера: ${response.status}`
 
 				try {
@@ -173,7 +235,21 @@ const QuizPage = () => {
 			}
 
 			const results = await response.json()
-			setTestResults(results)
+
+			// Подсчитываем и добавляем очки за правильные ответы
+			const correctAnswers = results.score || 0
+			const earnedPoints = correctAnswers * POINTS_PER_CORRECT_ANSWER
+			const newTotalPoints = addPointsToTotal(earnedPoints)
+
+			// Добавляем информацию об очках к результатам
+			const enhancedResults = {
+				...results,
+				earnedPoints,
+				newTotalPoints,
+				pointsPerAnswer: POINTS_PER_CORRECT_ANSWER,
+			}
+
+			setTestResults(enhancedResults)
 			setShowResults(true)
 			setSubmitting(false)
 		} catch (err) {
@@ -198,6 +274,13 @@ const QuizPage = () => {
 		fetchCurrentTest()
 	}
 
+	// Функция для принудительного закрытия таймера (если нужно)
+	const closeTimer = () => {
+		stopTimer()
+		setError('Keyingi testni olish uchun kutish vaqti tugashini kuting')
+		setLoading(false)
+	}
+
 	if (loading) {
 		return (
 			<div className={`${styles.container} middle`}>
@@ -209,23 +292,6 @@ const QuizPage = () => {
 		)
 	}
 
-	// Тестовая функция для проверки API без токена
-	const testApiConnection = async () => {
-		try {
-			const response = await fetch('https://kiymeshek.uz/testa2/levels')
-
-			if (response.ok) {
-				const data = await response.json()
-				alert('API доступен! Проблема скорее всего в токене авторизации.')
-			} else {
-				alert('API недоступен. Проверьте подключение к интернету.')
-			}
-		} catch (error) {
-			console.error('💥 Ошибка подключения к API:', error)
-			alert(`Ошибка подключения: ${error.message}`)
-		}
-	}
-
 	if (error) {
 		return (
 			<div className={`${styles.container} middle`}>
@@ -235,9 +301,6 @@ const QuizPage = () => {
 					<div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
 						<button onClick={fetchCurrentTest} className={styles.retryButton}>
 							Qayta urinish
-						</button>
-						<button onClick={loadMockData} className={styles.retryButton}>
-							Test rejimi
 						</button>
 					</div>
 				</div>
@@ -265,6 +328,24 @@ const QuizPage = () => {
 	return (
 		<div className={`${styles.container} middle`}>
 			<div className={styles.quizContent}>
+				{/* Отображение общего количества очков */}
+				<div
+					className={styles.pointsDisplay}
+					style={{
+						textAlign: 'center',
+						marginBottom: '20px',
+						padding: '10px',
+						backgroundColor: '#f8f9fa',
+						borderRadius: '8px',
+						border: '2px solid #e9ecef',
+					}}
+				>
+					<h3 style={{ margin: '0', color: '#495057' }}>
+						💰 Jami ochkolar:{' '}
+						<span style={{ color: '#28a745', fontWeight: 'bold' }}>{totalPoints}</span>
+					</h3>
+				</div>
+
 				<div className={styles.progressBar}>
 					<div
 						className={styles.progressFill}
@@ -274,12 +355,7 @@ const QuizPage = () => {
 
 				<div className={styles.quizCard}>
 					<div className={styles.cardHeader}>
-						<h2>
-							{quizData?.level || 'Test'}
-							{debugMode && (
-								<span style={{ color: '#ff6b6b', fontSize: '14px' }}> (Test rejimi)</span>
-							)}
-						</h2>
+						<h2>{quizData?.level || 'Test'}</h2>
 						<span className={styles.subtitle}>{quizData?.message}</span>
 					</div>
 
@@ -288,6 +364,16 @@ const QuizPage = () => {
 							Savol {currentQuestionIndex + 1}/{questions.length}
 						</h3>
 						<p className={styles.questionText}>{currentQuestion.title}</p>
+						<p
+							style={{
+								fontSize: '14px',
+								color: '#6c757d',
+								marginTop: '10px',
+								fontStyle: 'italic',
+							}}
+						>
+							💎 Har bir to'g'ri javob uchun {POINTS_PER_CORRECT_ANSWER} ochko olasiz
+						</p>
 					</div>
 
 					<div className={styles.optionsContainer}>
@@ -319,6 +405,59 @@ const QuizPage = () => {
 				</div>
 			</div>
 
+			{/* Модальное окно с таймером */}
+			{showTimer && (
+				<div className={modalStyles.modalOverlay}>
+					<div className={`${modalStyles.modalContent} ${modalStyles.timerModal}`}>
+						<div className={modalStyles.modalHeader}>
+							<h2>⏰ Keyingi test uchun kutish</h2>
+						</div>
+
+						<div className={modalStyles.timerContainer}>
+							<div className={modalStyles.timerCircle}>
+								<div className={modalStyles.timerDisplay}>
+									<span className={modalStyles.timerTime}>{formatTime(timeLeft)}</span>
+									<span className={modalStyles.timerLabel}>qoldi</span>
+								</div>
+								<svg className={modalStyles.timerRing} width='200' height='200'>
+									<circle className={modalStyles.timerBackground} cx='100' cy='100' r='90' />
+									<circle
+										className={modalStyles.timerProgress}
+										cx='100'
+										cy='100'
+										r='90'
+										style={{
+											strokeDashoffset: `${565.5 * (1 - (90 - timeLeft) / 90)}`,
+										}}
+									/>
+								</svg>
+							</div>
+
+							<div className={modalStyles.timerMessage}>
+								<p>
+									Siz oldingi testni yaqinda topshirgansiz. Keyingi testni olish uchun
+									<strong> 1 daqiqa 30 soniya</strong> kutishingiz kerak.
+								</p>
+								<p className={modalStyles.timerSubtext}>
+									Kutish vaqti tugagach, yangi test avtomatik yuklanadi.
+								</p>
+							</div>
+						</div>
+
+						<div className={modalStyles.modalActions}>
+							<button
+								className={modalStyles.secondaryButton}
+								onClick={closeTimer}
+								style={{ opacity: 0.7, cursor: 'not-allowed' }}
+								disabled
+							>
+								Yopish
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
 			{/* Модальное окно с результатами */}
 			{showResults && testResults && (
 				<div className={modalStyles.modalOverlay}>
@@ -332,14 +471,15 @@ const QuizPage = () => {
 								<div className={modalStyles.scoreItem}>
 									<span className={modalStyles.label}>To'g'ri javoblar:</span>
 									<span className={modalStyles.value}>
-										{testResults.score} из {testResults.totalQuestions}
+										{testResults.totalQuestions} {' dan'} {testResults.score}
 									</span>
 								</div>
 
 								<div className={modalStyles.scoreItem}>
 									<span className={modalStyles.label}>Olingan ballar:</span>
 									<span className={modalStyles.value}>
-										{testResults.score * 100} из {testResults.totalQuestions * 100}
+										{testResults.totalQuestions * POINTS_PER_CORRECT_ANSWER} dan{' '}
+										{testResults.score * POINTS_PER_CORRECT_ANSWER}
 									</span>
 								</div>
 
@@ -347,6 +487,43 @@ const QuizPage = () => {
 									<span className={modalStyles.label}>Foiz:</span>
 									<span className={modalStyles.value}>
 										{Math.round((testResults.score / testResults.totalQuestions) * 100)}%
+									</span>
+								</div>
+
+								{/* Новая секция с информацией об очках */}
+								<div
+									className={modalStyles.scoreItem}
+									style={{
+										backgroundColor: '#d4edda',
+										padding: '15px',
+										borderRadius: '8px',
+										marginTop: '15px',
+									}}
+								>
+									<span className={modalStyles.label}>💰 Olingan ochkolar:</span>
+									<span
+										className={modalStyles.value}
+										style={{ color: '#155724', fontWeight: 'bold' }}
+									>
+										+{testResults.earnedPoints}
+									</span>
+								</div>
+
+								<div
+									className={modalStyles.scoreItem}
+									style={{
+										backgroundColor: '#cce7ff',
+										padding: '15px',
+										borderRadius: '8px',
+										marginTop: '10px',
+									}}
+								>
+									<span className={modalStyles.label}>🏆 Jami ochkolar:</span>
+									<span
+										className={modalStyles.value}
+										style={{ color: '#004085', fontWeight: 'bold' }}
+									>
+										{testResults.newTotalPoints}
 									</span>
 								</div>
 							</div>
@@ -379,6 +556,11 @@ const QuizPage = () => {
 										>
 											<span>Savol {index + 1}</span>
 											<span>{result.correct ? '✅' : '❌'}</span>
+											{result.correct && (
+												<span style={{ fontSize: '12px', color: '#28a745' }}>
+													+{POINTS_PER_CORRECT_ANSWER}
+												</span>
+											)}
 										</div>
 									))}
 								</div>

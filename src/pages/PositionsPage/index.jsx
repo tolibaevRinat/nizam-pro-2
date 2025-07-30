@@ -53,7 +53,7 @@ const PositionsPage = () => {
 		fetchData()
 	}, [])
 
-	// Daraja holatini aniqlash funksiyasi (kutishsiz)
+	// Daraja holatini aniqlash funksiyasi (yangi logika)
 	const getLevelStatus = (level, index) => {
 		if (!userProfile || !userProfile.testProgress) {
 			return 'locked'
@@ -62,27 +62,23 @@ const PositionsPage = () => {
 		const { currentLevel, completedTests } = userProfile.testProgress
 		const currentLevelIndex = levels.findIndex(l => l === currentLevel)
 
-		// Agar bu joriy daraja bo'lsa - uni topshirish mumkin
-		if (level === currentLevel) {
-			return 'current'
-		}
-
-		// Agar daraja o'tilgan bo'lsa (completedTests da bor)
+		// Avval tekshiramiz - daraja o'tilgan bo'lsa (completedTests da bor)
 		if (completedTests && completedTests.some(test => test.level === level)) {
 			return 'completed'
 		}
 
-		// Agar bu joriy darajadan past bo'lsa - u o'tilgan bo'lishi kerak
-		if (index < currentLevelIndex) {
-			return 'completed'
+		// Agar bu joriy daraja bo'lsa - uni topshirish kerak (current emas, available)
+		if (level === currentLevel) {
+			return 'available' // currentLevel ni ham topshirish kerak
 		}
 
-		// Agar bu keyingi daraja bo'lsa (joriy darajadan bir daraja yuqori)
-		if (index === currentLevelIndex + 1) {
+		// Agar bu joriy darajadan past bo'lsa va u completedTests da yo'q bo'lsa
+		if (index < currentLevelIndex) {
+			// Agar past daraja hali o'tilmagan bo'lsa - uni topshirish mumkin
 			return 'available'
 		}
 
-		// Qolgan barcha darajalar bloklangan
+		// Qolgan barcha darajalar (joriy darajadan yuqori) bloklangan
 		return 'locked'
 	}
 

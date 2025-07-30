@@ -42,6 +42,28 @@ const AuthPage = ({
 	handleRegister,
 	validateEmail,
 }) => {
+	// Функции для безопасного обновления состояний с проверкой на undefined
+	const updateLoginData = (field, value) => {
+		setLoginData(prev => ({
+			...prev,
+			[field]: value || '',
+		}))
+	}
+
+	const updateRegisterData = (field, value) => {
+		setRegisterData(prev => ({
+			...prev,
+			[field]: value || '',
+		}))
+	}
+
+	const clearFieldError = field => {
+		setFieldErrors(prev => ({
+			...prev,
+			[field]: '',
+		}))
+	}
+
 	return (
 		<div className={styles.container}>
 			<div className={styles.backgroundAnimation}>
@@ -113,15 +135,15 @@ const AuthPage = ({
 										<input
 											type='email'
 											required
-											value={loginData.email}
+											value={loginData?.email || ''}
 											onChange={e => {
-												setLoginData({ ...loginData, email: e.target.value })
-												setFieldErrors({ ...fieldErrors, email: '' })
+												updateLoginData('email', e.target.value)
+												clearFieldError('email')
 											}}
 											className={styles.input}
 											placeholder='email@example.com'
 										/>
-										{loginData.email && validateEmail(loginData.email) && (
+										{loginData?.email && validateEmail(loginData.email) && (
 											<CheckCircle className={styles.validIcon} />
 										)}
 									</div>
@@ -140,8 +162,8 @@ const AuthPage = ({
 										<input
 											type={showPassword ? 'text' : 'password'}
 											required
-											value={loginData.password}
-											onChange={e => setLoginData({ ...loginData, password: e.target.value })}
+											value={loginData?.password || ''}
+											onChange={e => updateLoginData('password', e.target.value)}
 											className={styles.input}
 											placeholder='Parolni kiriting'
 										/>
@@ -193,10 +215,10 @@ const AuthPage = ({
 											<input
 												type='text'
 												required
-												value={registerData.firstName}
+												value={registerData?.firstName || ''}
 												onChange={e => {
-													setRegisterData({ ...registerData, firstName: e.target.value })
-													setFieldErrors({ ...fieldErrors, firstName: '' })
+													updateRegisterData('firstName', e.target.value)
+													clearFieldError('firstName')
 												}}
 												className={styles.input}
 												placeholder='Ismingiz'
@@ -221,10 +243,10 @@ const AuthPage = ({
 											<input
 												type='text'
 												required
-												value={registerData.lastName}
+												value={registerData?.lastName || ''}
 												onChange={e => {
-													setRegisterData({ ...registerData, lastName: e.target.value })
-													setFieldErrors({ ...fieldErrors, lastName: '' })
+													updateRegisterData('lastName', e.target.value)
+													clearFieldError('lastName')
 												}}
 												className={styles.input}
 												placeholder='Familiyangiz'
@@ -246,8 +268,8 @@ const AuthPage = ({
 										<input
 											type='text'
 											required
-											value={registerData.username}
-											onChange={e => setRegisterData({ ...registerData, username: e.target.value })}
+											value={registerData?.username || ''}
+											onChange={e => updateRegisterData('username', e.target.value)}
 											className={styles.input}
 											placeholder='Username'
 										/>
@@ -266,15 +288,15 @@ const AuthPage = ({
 										<input
 											type='email'
 											required
-											value={registerData.email}
+											value={registerData?.email || ''}
 											onChange={e => {
-												setRegisterData({ ...registerData, email: e.target.value })
-												setFieldErrors({ ...fieldErrors, email: '' })
+												updateRegisterData('email', e.target.value)
+												clearFieldError('email')
 											}}
 											className={styles.input}
 											placeholder='email@example.com'
 										/>
-										{registerData.email && validateEmail(registerData.email) && (
+										{registerData?.email && validateEmail(registerData.email) && (
 											<CheckCircle className={styles.validIcon} />
 										)}
 									</div>
@@ -297,10 +319,10 @@ const AuthPage = ({
 										<input
 											type={showPassword ? 'text' : 'password'}
 											required
-											value={registerData.password}
+											value={registerData?.password || ''}
 											onChange={e => {
-												setRegisterData({ ...registerData, password: e.target.value })
-												setFieldErrors({ ...fieldErrors, password: '' })
+												updateRegisterData('password', e.target.value)
+												clearFieldError('password')
 											}}
 											className={styles.input}
 											placeholder='Parol yarating'

@@ -1,0 +1,471 @@
+// store.module.scss
+
+.container {
+	min-height: 100vh;
+	background: linear-gradient(to bottom right, #fef3c7, #fed7aa);
+	margin-top: -22px;
+	padding-bottom: 72px;
+}
+
+.wrapper {
+	max-width: 28rem;
+	margin: 0 auto;
+	background: white;
+	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+	min-height: 100vh;
+}
+
+.header {
+	background: linear-gradient(to right, #f59e0b, #ea580c);
+	padding: 1rem;
+	color: white;
+}
+
+.headerTop {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 1rem;
+}
+
+.headerTitle {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.logoIcon {
+	width: 2rem;
+	height: 2rem;
+	background-color: rgba(251, 191, 36, 0.3);
+	border-radius: 0.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	svg {
+		width: 1.25rem;
+		height: 1.25rem;
+		color: #92400e;
+	}
+}
+
+.title {
+	font-size: 1.25rem;
+	font-weight: 700;
+	margin: 0;
+}
+
+.userIcon {
+	width: 2.5rem;
+	height: 2.5rem;
+	background: rgba(255, 255, 255, 0.2);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	svg {
+		width: 1.5rem;
+		height: 1.5rem;
+	}
+}
+
+.pointsDisplay {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+
+	.sparkleIcon {
+		width: 1.25rem;
+		height: 1.25rem;
+		animation: pulse 2s infinite;
+	}
+
+	.pointsText {
+		font-size: 1.125rem;
+		font-weight: 600;
+	}
+
+	.starIcon {
+		width: 1.25rem;
+		height: 1.25rem;
+		animation: bounce 1s infinite;
+	}
+}
+
+.searchContainer {
+	position: relative;
+
+	.searchIcon {
+		position: absolute;
+		left: 0.75rem;
+		top: 50%;
+		transform: translateY(-50%);
+		color: #9ca3af;
+		width: 1rem;
+		height: 1rem;
+	}
+
+	.searchInput {
+		width: 100%;
+		padding: 0.5rem 1rem 0.5rem 2.5rem;
+		border-radius: 0.5rem;
+		color: #1f2937;
+		border: none;
+		outline: none;
+
+		&::placeholder {
+			color: #6b7280;
+		}
+
+		&:focus {
+			box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.5);
+		}
+	}
+}
+
+.content {
+	padding: 1rem;
+}
+
+.sectionTitle {
+	font-size: 1.125rem;
+	font-weight: 600;
+	color: #1f2937;
+	margin-bottom: 1rem;
+}
+
+.itemsList {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.storeItem {
+	background: white;
+	border-radius: 0.75rem;
+	padding: 1rem;
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+	border: 2px solid;
+	transition: all 0.3s ease;
+
+	&.affordable {
+		border-color: #bbf7d0;
+
+		&:hover {
+			border-color: #86efac;
+			box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+			transform: translateY(-2px);
+		}
+	}
+
+	&.unaffordable {
+		border-color: #fecaca;
+		opacity: 0.75;
+	}
+}
+
+.itemContent {
+	display: flex;
+	align-items: flex-start;
+	gap: 1rem;
+}
+
+.itemIcon {
+	padding: 0.75rem;
+	border-radius: 0.5rem;
+	transition: transform 0.3s ease;
+
+	&:hover {
+		transform: scale(1.1);
+	}
+
+	&.affordableIcon {
+		background-color: #dcfce7;
+
+		svg {
+			width: 1.5rem;
+			height: 1.5rem;
+			color: #16a34a;
+			animation: pulse 2s infinite;
+		}
+	}
+
+	&.unaffordableIcon {
+		background-color: #f3f4f6;
+
+		svg {
+			width: 1.5rem;
+			height: 1.5rem;
+			color: #9ca3af;
+		}
+	}
+}
+
+.itemDetails {
+	flex: 1;
+}
+
+.itemName {
+	font-weight: 600;
+	color: #1f2937;
+	margin-bottom: 0.25rem;
+}
+
+.itemDescription {
+	font-size: 0.875rem;
+	color: #6b7280;
+	margin-bottom: 0.5rem;
+}
+
+.itemConversion {
+	font-size: 0.75rem;
+	color: #2563eb;
+	margin-bottom: 0.5rem;
+}
+
+.itemFooter {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.itemPrice {
+	font-weight: 700;
+
+	&.freePrice {
+		color: #16a34a;
+	}
+
+	&.regularPrice {
+		color: #1f2937;
+	}
+}
+
+.purchaseButton {
+	padding: 0.5rem 1rem;
+	border-radius: 0.5rem;
+	font-weight: 500;
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	border: none;
+	cursor: pointer;
+
+	svg {
+		width: 1rem;
+		height: 1rem;
+	}
+
+	&.affordableButton {
+		background: linear-gradient(to right, #10b981, #059669);
+		color: white;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+		&:hover {
+			background: linear-gradient(to right, #059669, #047857);
+			transform: scale(1.05);
+		}
+	}
+
+	&.freeButton {
+		background: linear-gradient(to right, #3b82f6, #2563eb);
+		color: white;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+		&:hover {
+			background: linear-gradient(to right, #2563eb, #1d4ed8);
+			transform: scale(1.05);
+		}
+	}
+
+	&.disabledButton {
+		background-color: #d1d5db;
+		color: #6b7280;
+		cursor: not-allowed;
+
+		&:hover {
+			transform: none;
+		}
+	}
+}
+
+// Modal styles
+.modalOverlay {
+	position: fixed;
+	inset: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 50;
+	padding: 1rem;
+	animation: fadeIn 0.3s ease;
+}
+
+.modal {
+	background: white;
+	border-radius: 0.75rem;
+	padding: 1.5rem;
+	max-width: 24rem;
+	width: 100%;
+	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+	animation: zoomIn 0.3s ease;
+}
+
+.modalContent {
+	text-align: center;
+}
+
+.modalIcon {
+	width: 4rem;
+	height: 4rem;
+	background: linear-gradient(to right, #fbbf24, #f97316);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 0 auto 1rem;
+
+	svg {
+		width: 2rem;
+		height: 2rem;
+		color: white;
+	}
+}
+
+.modalTitle {
+	font-size: 1.125rem;
+	font-weight: 700;
+	color: #1f2937;
+	margin-bottom: 0.5rem;
+}
+
+.modalDescription {
+	color: #6b7280;
+	margin-bottom: 1rem;
+}
+
+.modalSummary {
+	background-color: #f9fafb;
+	border-radius: 0.5rem;
+	padding: 0.75rem;
+	margin-bottom: 1.5rem;
+}
+
+.modalSummaryRow {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 0.5rem;
+
+	&:last-child {
+		margin-bottom: 0;
+	}
+}
+
+.modalSummaryLabel {
+	color: #6b7280;
+}
+
+.modalSummaryPrice {
+	font-weight: 700;
+	color: #dc2626;
+}
+
+.modalSummaryRemaining {
+	font-weight: 700;
+	color: #16a34a;
+}
+
+.modalButtons {
+	display: flex;
+	gap: 0.75rem;
+}
+
+.modalButton {
+	flex: 1;
+	padding: 0.5rem 1rem;
+	border-radius: 0.5rem;
+	font-weight: 500;
+	transition: all 0.2s ease;
+	border: none;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+
+	svg {
+		width: 1rem;
+		height: 1rem;
+	}
+
+	&.cancelButton {
+		background-color: #e5e7eb;
+		color: #1f2937;
+
+		&:hover {
+			background-color: #d1d5db;
+		}
+	}
+
+	&.confirmButton {
+		background: linear-gradient(to right, #10b981, #059669);
+		color: white;
+
+		&:hover {
+			background: linear-gradient(to right, #059669, #047857);
+			transform: scale(1.05);
+		}
+	}
+}
+
+// Animations
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes zoomIn {
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+}
+
+@keyframes bounce {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-25%);
+	}
+}
+
+// Utility classes for number formatting
+.formatNumber {
+	font-variant-numeric: tabular-nums;
+}

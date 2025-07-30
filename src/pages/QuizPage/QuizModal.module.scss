@@ -38,6 +38,105 @@
 	}
 }
 
+/* Стили для таймера */
+.timerContainer {
+	padding: 30px;
+	text-align: center;
+}
+
+.timerCircle {
+	position: relative;
+	display: inline-block;
+	margin-bottom: 30px;
+}
+
+.timerDisplay {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	text-align: center;
+	z-index: 2;
+}
+
+.timerTime {
+	display: block;
+	font-size: 32px;
+	font-weight: 700;
+	color: #2c3e50;
+	margin-bottom: 4px;
+	font-family: 'Courier New', monospace;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.timerLabel {
+	display: block;
+	font-size: 14px;
+	color: #7f8c8d;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+}
+
+.timerRing {
+	transform: rotate(-90deg);
+	filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+.timerBackground {
+	fill: none;
+	stroke: #e9ecef;
+	stroke-width: 8;
+	stroke-linecap: round;
+}
+
+.timerProgress {
+	fill: none;
+	stroke: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	stroke: #667eea;
+	stroke-width: 8;
+	stroke-linecap: round;
+	stroke-dasharray: 565.5;
+	stroke-dashoffset: 0;
+	transition: stroke-dashoffset 1s linear;
+	animation: timerPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes timerPulse {
+	0% {
+		stroke-width: 8;
+		opacity: 1;
+	}
+	100% {
+		stroke-width: 10;
+		opacity: 0.8;
+	}
+}
+
+.timerMessage {
+	text-align: center;
+	max-width: 350px;
+	margin: 0 auto;
+
+	p {
+		color: #495057;
+		font-size: 16px;
+		line-height: 1.6;
+		margin: 0 0 16px 0;
+
+		strong {
+			color: #667eea;
+			font-weight: 600;
+		}
+	}
+}
+
+.timerSubtext {
+	font-size: 14px !important;
+	color: #6c757d !important;
+	font-style: italic;
+}
+
 .resultsContainer {
 	padding: 20px 30px;
 }

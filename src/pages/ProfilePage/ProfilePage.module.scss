@@ -3,8 +3,9 @@
 .container {
 	min-height: calc(100vh - 120px);
 	background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-	padding: 2rem 1rem;
 	font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+	padding-inline: 10px;
 }
 
 .profileCard {
@@ -362,10 +363,6 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-	.container {
-		padding: 1rem 0.5rem;
-	}
-
 	.header {
 		padding: 2rem 1.5rem;
 		flex-direction: column;

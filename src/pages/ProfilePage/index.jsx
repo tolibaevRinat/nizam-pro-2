@@ -70,7 +70,7 @@ const ProfilePage = ({ handleLogout }) => {
 	}
 
 	return (
-		<div className={styles.container}>
+		<div className={`${styles.container} middle`}>
 			<div className={styles.profileCard}>
 				{/* Header секция */}
 				<div className={styles.header}>

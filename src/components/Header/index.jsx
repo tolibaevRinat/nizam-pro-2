@@ -11,7 +11,7 @@ function capitalizeFirstLetter(str, swap) {
 
 const Header = () => {
 	const { firstName, lastName } = JSON.parse(localStorage.getItem('tempUser'))
-	const user = JSON.parse(localStorage.getItem('user'))
+	const totalPoints = localStorage.getItem('userTotalPoints')
 
 	const name = capitalizeFirstLetter(firstName, 'Ism')
 	const secondName = capitalizeFirstLetter(lastName, 'Familiya')
@@ -35,7 +35,7 @@ const Header = () => {
 				</div>
 				<div className={`${styles.points}`}>
 					<img className={`${styles.jitterGlowStar}`} src='/star.svg' alt=' ' />
-					{user.testProgress.completedTests.length * 500}
+					{totalPoints}
 				</div>
 			</div>
 		</div>

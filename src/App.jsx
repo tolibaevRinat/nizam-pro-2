@@ -12,22 +12,28 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Loader from './components/Loader'
 import PositionsPage from './pages/PositionsPage'
 import QuizPage from './pages/QuizPage'
-import IntroPages from './pages/IntroPages' // Новый компонент
+import IntroPages from './pages/IntroPages'
 
 function App() {
 	// === Состояния ===
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(true)
-	const [showIntro, setShowIntro] = useState(false) // Новое состояние
+	const [showIntro, setShowIntro] = useState(false)
 
-	// ... (остальные state'ы остаются без изменений)
+	// Инициализируем с определенными значениями, а не пустыми строками
 	const [activeTab, setActiveTab] = useState('login')
 	const [showPassword, setShowPassword] = useState(false)
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
 	const [fieldErrors, setFieldErrors] = useState({})
 	const [isVisible, setIsVisible] = useState(false)
-	const [loginData, setLoginData] = useState({ email: '', password: '' })
+
+	// Убеждаемся, что все поля имеют определенные значения
+	const [loginData, setLoginData] = useState({
+		email: '',
+		password: '',
+	})
+
 	const [registerData, setRegisterData] = useState({
 		firstName: '',
 		lastName: '',
@@ -56,7 +62,7 @@ function App() {
 		navigate('/auth')
 	}
 
-	// Фoydalanuvчining to'liq ma'lumotini olish va saqlash uchun yordamchi funksiya
+	// Функция получения и сохранения данных пользователя
 	const fetchAndSetUser = async token => {
 		try {
 			const response = await axios.get('https://kiymeshek.uz/testa2/profile', {
@@ -64,15 +70,15 @@ function App() {
 			})
 			const fullUserData = response.data.user
 
-			// 1. To'liq ma'lumotni state'ga o'rnatish
+			// 1. Сохраняем полные данные в state
 			setUser(fullUserData)
-			// 2. To'liq ma'lumotni localStorage'ga saqlash
+			// 2. Сохраняем полные данные в localStorage
 			localStorage.setItem('user', JSON.stringify(fullUserData))
 
 			return true
 		} catch (err) {
 			console.error('Failed to fetch profile:', err)
-			// Agar tokenda muammo bo'lsa, barcha ma'lumotlarni tozalash
+			// Если проблема с токеном, очищаем все данные
 			localStorage.removeItem('token')
 			localStorage.removeItem('user')
 			setUser(null)
@@ -87,7 +93,7 @@ function App() {
 
 			const token = localStorage.getItem('token')
 			if (token) {
-				// To'liq ma'lumotni olib, localStorage'ni yangilaymiz
+				// Получаем полные данные и обновляем localStorage
 				await fetchAndSetUser(token)
 			}
 			setLoading(false)
@@ -95,9 +101,9 @@ function App() {
 
 		checkAuth()
 		setIsVisible(true)
-	}, []) // Bir marta ishlaydi
+	}, [])
 
-	// Logout funksiyasi (o'zgarishsiz)
+	// Функция выхода
 	const handleLogout = async () => {
 		try {
 			const token = localStorage?.getItem?.('token')
@@ -115,11 +121,18 @@ function App() {
 			localStorage.removeItem('token')
 			localStorage.removeItem('user')
 			setUser(null)
-			setRegisterData({ username: '', firstname: '', lastname: '', email: '', password: '' })
+			// Сбрасываем формы к начальным значениям
+			setLoginData({ email: '', password: '' })
+			setRegisterData({
+				firstName: '',
+				lastName: '',
+				username: '',
+				email: '',
+				password: '',
+			})
 		}
 	}
 
-	// ### ASOSIY O'ZGARISH: `handleLogin` FUNKSIYASI ###
 	const handleLogin = async e => {
 		e.preventDefault()
 		setLoading(true)
@@ -134,12 +147,10 @@ function App() {
 		}
 
 		try {
-			// 1. Login qilib, tokenni olamiz
 			const loginResponse = await axios.post('https://kiymeshek.uz/testa2/login', loginData)
 			const token = loginResponse.data.token
 			localStorage.setItem('token', token)
 
-			// 2. Olingan token bilan to'liq foydalanuvchi ma'lumotini (/profile'dan) olamiz
 			const success = await fetchAndSetUser(token)
 
 			if (success) {
@@ -155,7 +166,6 @@ function App() {
 		}
 	}
 
-	// Register funksiyasi (o'zgarishsiz)
 	const handleRegister = async e => {
 		e.preventDefault()
 		setLoading(true)
@@ -194,7 +204,13 @@ function App() {
 				setSuccess('')
 			}, 2000)
 
-			setRegisterData({ firstName: '', lastName: '', username: '', email: '', password: '' })
+			setRegisterData({
+				firstName: '',
+				lastName: '',
+				username: '',
+				email: '',
+				password: '',
+			})
 		} catch (err) {
 			setError(err.response?.data?.message || "Ro'yxatdan o'tishda xatolik.")
 		} finally {
@@ -204,7 +220,6 @@ function App() {
 
 	const validateEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
-	// Показываем intro страницы если нужно
 	if (showIntro) {
 		return <IntroPages onComplete={handleIntroComplete} />
 	}

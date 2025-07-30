@@ -12,6 +12,7 @@ const HomePage = () => {
 	const [error, setError] = useState(null)
 
 	const userInfo = JSON.parse(localStorage.getItem('user'))
+	const totalPoints = localStorage.getItem('userTotalPoints')
 
 	useEffect(() => {
 		const fetchPositions = async () => {
@@ -111,13 +112,10 @@ const HomePage = () => {
 										<span className={styles.statLabel}>Jami darajalar:</span>
 										<span className={styles.statValue}>{level.totalLevels}</span>
 									</div>
-									<div className={styles.stat}>
-										<span className={styles.statLabel}>Jami ballar:</span>
-										<span className={styles.statValue}>{level.totalPoints}</span>
-									</div>
+
 									<div className={styles.stat}>
 										<span className={styles.statLabel}>Yig'ilgan ballar:</span>
-										<span className={styles.statValue}>{level.completedLevels * 500}</span>
+										<span className={styles.statValue}>{totalPoints}</span>
 									</div>
 								</div>
 
