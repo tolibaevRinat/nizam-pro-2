@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+
 import styles from './QuizPage.module.scss'
 import modalStyles from './QuizModal.module.scss'
 
@@ -20,6 +22,8 @@ const QuizPage = () => {
 	const [timeLeft, setTimeLeft] = useState(90) // 1 мин 30 сек = 90 секунд
 	const [isTimerRunning, setIsTimerRunning] = useState(false)
 	const timerRef = useRef(null)
+
+	const navigate = useNavigate()
 
 	// Константа для очков за правильный ответ
 	const POINTS_PER_CORRECT_ANSWER = 50
@@ -261,7 +265,7 @@ const QuizPage = () => {
 	const closeModal = () => {
 		setShowResults(false)
 		// Перенаправляем на страницу /positions
-		window.location.href = '/positions'
+		navigate('/positions')
 	}
 
 	const retryTest = () => {
