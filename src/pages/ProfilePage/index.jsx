@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import {
 	User,
 	Mail,
@@ -9,6 +10,15 @@ import {
 	Star,
 	Trophy,
 	Shield,
+	Package,
+	ShoppingBag,
+	FileCheck,
+	Building,
+	Briefcase,
+	Wallet,
+	Car,
+	Landmark,
+	Home,
 } from 'lucide-react'
 
 import styles from './ProfilePage.module.scss'
@@ -18,15 +28,69 @@ const ProfilePage = ({ handleLogout }) => {
 	const userData = JSON.parse(localStorage?.getItem?.('user') || '{}')
 	const { firstName, lastName } = JSON.parse(localStorage?.getItem?.('tempUser') || '{}')
 
+	const [purchasedItems, setPurchasedItems] = useState(() => {
+		const saved = localStorage.getItem('purchasedItems')
+		return saved ? JSON.parse(saved) : []
+	})
+
+	// Функция для получения иконки товара
+	const getItemIcon = category => {
+		switch (category) {
+			case 'bonus':
+				return FileCheck
+			case 'health':
+				return Building
+			case 'insurance':
+				return Briefcase
+			case 'money':
+				return Wallet
+			case 'vehicle':
+				return Car
+			case 'banking':
+				return Landmark
+			case 'property':
+				return Home
+			default:
+				return Package
+		}
+	}
+
+	// Функция для форматирования чисел
+	const formatNumber = num => {
+		return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+	}
+
 	// Функция для форматирования даты
 	const formatDate = dateString => {
 		if (!dateString) return "Noma'lum"
+
 		const date = new Date(dateString)
-		return date.toLocaleDateString('uz-UZ', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-		})
+
+		// Проверяем валидность даты
+		if (isNaN(date.getTime())) return "Noma'lum"
+
+		const months = [
+			'Yanvar',
+			'Fevral',
+			'Mart',
+			'Aprel',
+			'May',
+			'Iyun',
+			'Iyul',
+			'Avgust',
+			'Sentabr',
+			'Oktabr',
+			'Noyabr',
+			'Dekabr',
+		]
+
+		const day = date.getDate()
+		const month = months[date.getMonth()]
+		const year = date.getFullYear()
+		const hours = date.getHours().toString().padStart(2, '0')
+		const minutes = date.getMinutes().toString().padStart(2, '0')
+
+		return `${day} ${month} ${year}, ${hours}:${minutes}`
 	}
 
 	// Получаем иконку для уровня
@@ -218,6 +282,35 @@ const ProfilePage = ({ handleLogout }) => {
 						</div>
 					</div>
 				</div>
+				{/* Purchased Items Section */}
+				{purchasedItems.length > 0 && (
+					<div className={styles.purchasedSection}>
+						<h2 className={styles.sectionTitle}>Sotib olingan mahsulotlar</h2>
+						<div className={styles.purchasedGrid}>
+							{purchasedItems.map((item, index) => {
+								const IconComponent = getItemIcon(item.category)
+								return (
+									<div key={index} className={styles.purchasedCard}>
+										<div className={styles.purchasedIcon}>
+											<IconComponent />
+										</div>
+										<div className={styles.purchasedInfo}>
+											<h4 className={styles.purchasedName}>{item.name}</h4>
+											<p className={styles.purchasedDescription}>{item.description}</p>
+											<div className={styles.purchasedMeta}>
+												<span className={styles.purchasedPrice}>
+													{item.price === 0 ? 'Bepul' : `${formatNumber(item.price)} ball`}
+												</span>
+												<span className={styles.purchasedCounter}>x{item.counter}</span>
+											</div>
+											<div className={styles.purchasedDate}>{formatDate(item.purchaseDate)}</div>
+										</div>
+									</div>
+								)
+							})}
+						</div>
+					</div>
+				)}
 				<button className={`${styles.logout}`} onClick={handleLogout}>
 					Chiqish
 				</button>

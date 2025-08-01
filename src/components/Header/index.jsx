@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
 import styles from './Header.module.scss'
 
@@ -11,12 +11,24 @@ function capitalizeFirstLetter(str, swap) {
 
 const Header = () => {
 	const { firstName, lastName } = JSON.parse(localStorage.getItem('tempUser'))
-	const totalPoints = localStorage.getItem('userTotalPoints') || 0
+
+	const [totalPoints, setTotalPoints] = useState(() => {
+		return localStorage.getItem('userTotalPoints') || 0
+	})
 
 	const name = capitalizeFirstLetter(firstName, 'Ism')
 	const secondName = capitalizeFirstLetter(lastName, 'Familiya')
 	const userData = JSON.parse(localStorage.getItem('user'))
 	const userLevel = capitalizeFirstLetter(userData.level, 'Aniq emas')
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			const currentPoints = localStorage.getItem('userTotalPoints') || 0
+			setTotalPoints(currentPoints)
+		}, 100) // проверяем каждые 100мс
+
+		return () => clearInterval(interval)
+	}, [])
 
 	return (
 		<div className={styles.header}>

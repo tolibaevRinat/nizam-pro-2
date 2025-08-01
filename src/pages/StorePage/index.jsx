@@ -19,14 +19,11 @@ import {
 import styles from './StorePage.module.scss'
 
 const StorePage = () => {
-	// В реальном проекте замените на localStorage
 	const [userPoints, setUserPoints] = useState(() => {
-		// Раскомментируйте для работы с localStorage:
 		return parseInt(localStorage.getItem('userTotalPoints')) || 0
 	})
 
 	const [purchasedItems, setPurchasedItems] = useState(() => {
-		// Раскомментируйте для работы с localStorage:
 		const saved = localStorage.getItem('purchasedItems')
 		return saved ? JSON.parse(saved) : []
 	})
@@ -116,14 +113,30 @@ const StorePage = () => {
 	const confirmPurchase = () => {
 		if (selectedItem && canAfford(selectedItem.price)) {
 			setUserPoints(prev => prev - selectedItem.price)
-			setPurchasedItems(prev => [
-				...prev,
-				{
-					...selectedItem,
-					purchaseDate: new Date().toISOString(),
-					purchaseId: Date.now(), // уникальный ID для каждой покупки
-				},
-			])
+			setPurchasedItems(prev => {
+				const existingItemIndex = prev.findIndex(item => item.id === selectedItem.id)
+
+				if (existingItemIndex !== -1) {
+					// Товар уже есть, увеличиваем counter
+					const updatedItems = [...prev]
+					updatedItems[existingItemIndex] = {
+						...updatedItems[existingItemIndex],
+						counter: updatedItems[existingItemIndex].counter + 1,
+					}
+					return updatedItems
+				} else {
+					// Новый товар, добавляем с counter = 1
+					return [
+						...prev,
+						{
+							...selectedItem,
+							counter: 1,
+							purchaseDate: new Date().toISOString(),
+							purchaseId: Date.now(),
+						},
+					]
+				}
+			})
 			setShowModal(false)
 			setSelectedItem(null)
 		}
