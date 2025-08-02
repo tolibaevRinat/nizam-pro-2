@@ -3,8 +3,8 @@ import { Lock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 
-import styles from './HomePage.module.scss'
 import Loader from '../../components/Loader'
+import styles from './HomePage.module.scss'
 
 const HomePage = () => {
 	const [positions, setPositions] = useState([])

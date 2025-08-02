@@ -20,7 +20,6 @@ const QuizPage = () => {
 	// Новые состояния для таймера
 	const [showTimer, setShowTimer] = useState(false)
 	const [timeLeft, setTimeLeft] = useState(90) // 1 мин 30 сек = 90 секунд
-	const [isTimerRunning, setIsTimerRunning] = useState(false)
 	const timerRef = useRef(null)
 
 	const navigate = useNavigate()
@@ -59,7 +58,6 @@ const QuizPage = () => {
 	const startTimer = () => {
 		setTimeLeft(90) // Сбрасываем на 1 мин 30 сек
 		setShowTimer(true)
-		setIsTimerRunning(true)
 		setError(null) // Скрываем ошибку
 		setLoading(false) // Останавливаем загрузку
 
@@ -68,7 +66,6 @@ const QuizPage = () => {
 				if (prevTime <= 1) {
 					// Таймер закончился
 					clearInterval(timerRef.current)
-					setIsTimerRunning(false)
 					setShowTimer(false)
 					// Автоматически пытаемся загрузить тест
 					fetchCurrentTest()
@@ -84,7 +81,6 @@ const QuizPage = () => {
 			clearInterval(timerRef.current)
 			timerRef.current = null
 		}
-		setIsTimerRunning(false)
 		setShowTimer(false)
 	}
 
@@ -506,10 +502,10 @@ const QuizPage = () => {
 								>
 									<span className={modalStyles.label}>💰 Olingan ochkolar:</span>
 									<span
-										className={modalStyles.value}
+										className={`${modalStyles.value}`}
 										style={{ color: '#155724', fontWeight: 'bold' }}
 									>
-										+{testResults.earnedPoints}
+										💎 +{testResults.earnedPoints}
 									</span>
 								</div>
 
