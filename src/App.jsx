@@ -42,6 +42,8 @@ function App() {
 		password: '',
 	})
 
+	const URL = 'http://kiymeshek.uz/'
+
 	const navigate = useNavigate()
 
 	// Функция для проверки первого визита
@@ -65,7 +67,7 @@ function App() {
 	// Функция получения и сохранения данных пользователя
 	const fetchAndSetUser = async token => {
 		try {
-			const response = await axios.get('https://kiymeshek.uz/testa2/profile', {
+			const response = await axios.get(`${URL}testa2/profile`, {
 				headers: { Authorization: `Bearer ${token}` },
 			})
 			const fullUserData = response.data.user
@@ -108,7 +110,7 @@ function App() {
 		try {
 			const token = localStorage?.getItem?.('token')
 			if (token) {
-				await axios.post('https://kiymeshek.uz/testa2/logout', null, {
+				await axios.post(`${URL}testa2/logout`, null, {
 					headers: {
 						Authorization: `Bearer ${token}`,
 						'Content-Type': 'application/json',
@@ -147,7 +149,7 @@ function App() {
 		}
 
 		try {
-			const loginResponse = await axios.post('https://kiymeshek.uz/testa2/login', loginData)
+			const loginResponse = await axios.post(`${URL}testa2/login`, loginData)
 			const token = loginResponse.data.token
 			localStorage.setItem('token', token)
 
@@ -187,7 +189,7 @@ function App() {
 		}
 
 		try {
-			await axios.post('https://kiymeshek.uz/testa2/register', {
+			await axios.post(`${URL}testa2/register`, {
 				username: registerData.username,
 				email: registerData.email,
 				password: registerData.password,
@@ -234,14 +236,14 @@ function App() {
 
 			<Routes>
 				<Route element={<ProtectedRoute user={user} />}>
-					<Route path='/' element={<HomePage handleLogout={handleLogout} />} />
+					<Route path='/' element={<HomePage handleLogout={handleLogout} url={URL} />} />
 					<Route
 						path='/profile'
 						element={<ProfilePage user={user} handleLogout={handleLogout} />}
 					/>
 					<Route path='/store' element={<StorePage />} />
-					<Route path='/positions' element={<PositionsPage />} />
-					<Route path='/quiz' element={<QuizPage />} />
+					<Route path='/positions' element={<PositionsPage url={URL} />} />
+					<Route path='/quiz' element={<QuizPage url={URL} />} />
 				</Route>
 
 				<Route
