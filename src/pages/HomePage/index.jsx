@@ -6,30 +6,35 @@ import axios from 'axios'
 import Loader from '../../components/Loader'
 import styles from './HomePage.module.scss'
 
-const HomePage = () => {
-	const [positions, setPositions] = useState([])
+const HomePage = ({ url }) => {
+	const [hududiyLevels, setHududiyLevels] = useState([])
+	const [respublikaLevels, setRespublikaLevels] = useState([])
+	const [tumanLevels, setTumanLevels] = useState([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
 
+	// ВАЖНО: Получаем данные пользователя из localStorage. Убедитесь, что они свежие!
+	// Мы решим это в QuizPage.
 	const userInfo = JSON.parse(localStorage.getItem('user'))
-	const totalPoints = localStorage.getItem('userTotalPoints') && 0
+	// Если userInfo или testProgress отсутствуют, используем пустой массив, чтобы избежать ошибок
+	const userCompleteTests = userInfo?.testProgress?.completedTests || []
 
 	useEffect(() => {
 		const fetchPositions = async () => {
 			try {
-				const response = await axios.get('https://kiymeshek.uz/testa2/levels')
-
-				setPositions(response.data.levels)
+				const response = await axios.get(`${url}testa2/levels`)
+				setHududiyLevels(response.data.hududiyLevels)
+				setRespublikaLevels(response.data.respublikaLevels)
+				setTumanLevels(response.data.tumanLevels)
 			} catch (err) {
 				setError('Ma’lumotlarni yuklashda xatolik yuz berdi.')
-				console.error(err) // Xatolikni konsolga chiqarish
+				console.error(err)
 			} finally {
 				setLoading(false)
 			}
 		}
-
 		fetchPositions()
-	}, [])
+	}, [url]) // url добавлен в зависимости
 
 	if (loading) {
 		return <Loader />
@@ -39,40 +44,61 @@ const HomePage = () => {
 		return <Loader text={error} />
 	}
 
-	// Данные для уровнейx
+	// --- НОВАЯ ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ---
+	// Считает, сколько уровней из категории (categoryLevels) пройдено пользователем (completedTests)
+	const countCompletedInCategory = (categoryLevels, completedTests) => {
+		// Фильтруем уровни категории, оставляя только те, что есть в массиве пройденных.
+		// Это найдет пересечение двух массивов строк.
+		// БЫЛО: completedTests.filter(test => categoryLevels.includes(test.level)).length
+		// СТАЛО:
+		return categoryLevels.filter(levelName => completedTests.includes(levelName)).length
+	}
+
+	// --- ПОЛНОСТЬЮ ПЕРЕРАБОТАННАЯ ЛОГИКА ДАННЫХ ---
+	const tumanCompletedCount = countCompletedInCategory(tumanLevels, userCompleteTests)
+	const hududiyCompletedCount = countCompletedInCategory(hududiyLevels, userCompleteTests)
+	const respublikaCompletedCount = countCompletedInCategory(respublikaLevels, userCompleteTests)
+
 	const levels = [
 		{
 			id: 1,
 			title: 'Tuman daraja',
 			subtitle: "Boshlang'ich daraja testlari",
-			totalLevels: positions.length,
-			totalPoints: 500 * positions.length,
-			completedLevels: userInfo.testProgress.completedTests.length,
+			totalLevels: tumanLevels.length,
+			completedLevels: tumanCompletedCount,
+			// Всегда активен, так как это первый уровень
 			isActive: true,
-			isCompleted: false,
+			isCompleted: tumanCompletedCount === tumanLevels.length,
+			route: 'tumanLevels',
 		},
 		{
 			id: 2,
 			title: 'Xududiy daraja',
-			subtitle: "Boshlang'ich daraja testlari",
-			totalLevels: 20,
-			totalPoints: 2500,
-			completedLevels: 0,
-			isActive: false,
-			isCompleted: false,
+			subtitle: "O'rta daraja testlari",
+			totalLevels: hududiyLevels.length,
+			completedLevels: hududiyCompletedCount,
+			// Активен, если предыдущий уровень (Tuman) полностью пройден
+			isActive: tumanCompletedCount === tumanLevels.length,
+			isCompleted: hududiyCompletedCount === hududiyLevels.length,
+			route: 'hududiyLevels',
 		},
 		{
 			id: 3,
 			title: 'Respublika daraja',
-			subtitle: "Boshlang'ich daraja kjkjk",
-			totalLevels: 25,
-			totalPoints: 3500,
-			completedLevels: 0,
-			isActive: false,
-			isCompleted: false,
+			subtitle: 'Yuqori daraja testlari',
+			totalLevels: respublikaLevels.length,
+			completedLevels: respublikaCompletedCount,
+			// Активен, если оба предыдущих уровня (Tuman и Xududiy) пройдены
+			isActive:
+				tumanCompletedCount === tumanLevels.length &&
+				hududiyCompletedCount === hududiyLevels.length,
+			isCompleted: respublikaCompletedCount === respublikaLevels.length,
+			route: 'respublikaLevels',
 		},
 	]
+
 	const calculateProgress = (completed, total) => {
+		if (total === 0) return 0 // Избегаем деления на ноль
 		return (completed / total) * 100
 	}
 
@@ -95,7 +121,7 @@ const HomePage = () => {
 							</div>
 
 							{level.isActive ? (
-								<Link to='/positions' className={styles.startButton}>
+								<Link to={`/positions?route=${level.route}`} className={styles.startButton}>
 									Boshlash
 								</Link>
 							) : (
@@ -111,11 +137,6 @@ const HomePage = () => {
 									<div className={styles.stat}>
 										<span className={styles.statLabel}>Jami darajalar:</span>
 										<span className={styles.statValue}>{level.totalLevels}</span>
-									</div>
-
-									<div className={styles.stat}>
-										<span className={styles.statLabel}>Yig'ilgan ballar:</span>
-										<span className={styles.statValue}>{totalPoints}</span>
 									</div>
 								</div>
 
