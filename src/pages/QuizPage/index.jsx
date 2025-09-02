@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import styles from './QuizPage.module.scss'
 import modalStyles from './QuizModal.module.scss'
 
-const QuizPage = () => {
+const QuizPage = ({ url }) => {
 	const [selectedAnswer, setSelectedAnswer] = useState(null)
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
 	const [questions, setQuestions] = useState([])
@@ -21,17 +21,43 @@ const QuizPage = () => {
 	const [showTimer, setShowTimer] = useState(false)
 	const [timeLeft, setTimeLeft] = useState(90) // 1 мин 30 сек = 90 секунд
 	const timerRef = useRef(null)
+	const [pointsPerCorrectAnswer, setPointsPerCorrectAnswer] = useState(100)
 
 	const navigate = useNavigate()
+	const [searchParams] = useSearchParams()
+	const levelRoute = searchParams.get('route')
 
-	// Константа для очков за правильный ответ
-	const POINTS_PER_CORRECT_ANSWER = 50
+	// Переменная для очков за правильный ответ
+	useEffect(() => {
+		let points = 100
+		switch (levelRoute) {
+			case 'tumanLevels':
+				setPointsPerCorrectAnswer(points * 2)
+				break
+			case 'hududiyLevels':
+				setPointsPerCorrectAnswer(points * 5)
+				break
+			case 'respublikaLevels':
+				setPointsPerCorrectAnswer(points * 10)
+				break
+			default:
+				setPointsPerCorrectAnswer(points * 5)
+				break
+		}
+	}, [levelRoute])
 
+	// Функции для работы с очками в localStorage
 	// Функции для работы с очками в localStorage
 	const getTotalPointsFromStorage = () => {
 		try {
 			const points = localStorage.getItem('userTotalPoints')
-			return points ? parseInt(points, 10) : 0
+			// Исправлено: проверяем на null/undefined до parseInt
+			if (!points || points === 'null' || points === 'undefined') {
+				return 0
+			}
+			const parsedPoints = parseInt(points, 10)
+			// Проверяем на NaN после парсинга
+			return isNaN(parsedPoints) ? 0 : parsedPoints
 		} catch (error) {
 			console.error('Ошибка при получении очков из localStorage:', error)
 			return 0
@@ -40,15 +66,19 @@ const QuizPage = () => {
 
 	const saveTotalPointsToStorage = points => {
 		try {
-			localStorage.setItem('userTotalPoints', points.toString())
+			// Проверяем, что points - это число
+			const pointsToSave = isNaN(points) ? 0 : points
+			localStorage.setItem('userTotalPoints', pointsToSave.toString())
 		} catch (error) {
 			console.error('Ошибка при сохранении очков в localStorage:', error)
 		}
 	}
 
 	const addPointsToTotal = newPoints => {
+		// Проверяем, что newPoints - это число
+		const pointsToAdd = isNaN(newPoints) ? 0 : newPoints
 		const currentTotal = getTotalPointsFromStorage()
-		const updatedTotal = currentTotal + newPoints
+		const updatedTotal = currentTotal + pointsToAdd
 		saveTotalPointsToStorage(updatedTotal)
 		setTotalPoints(updatedTotal)
 		return updatedTotal
@@ -137,7 +167,7 @@ const QuizPage = () => {
 				return
 			}
 
-			const response = await fetch('https://kiymeshek.uz/testa2/tests/current', {
+			const response = await fetch(`${url}testa2/tests/current`, {
 				method: 'GET',
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -218,7 +248,7 @@ const QuizPage = () => {
 			setSubmitting(true)
 			const token = getToken()
 
-			const response = await fetch('https://kiymeshek.uz/testa2/tests/submit', {
+			const response = await fetch(`${url}testa2/tests/submit`, {
 				method: 'POST',
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -236,17 +266,40 @@ const QuizPage = () => {
 
 			const results = await response.json()
 
-			// Подсчитываем и добавляем очки за правильные ответы
-			const correctAnswers = results.score || 0
-			const earnedPoints = correctAnswers * POINTS_PER_CORRECT_ANSWER
-			const newTotalPoints = addPointsToTotal(earnedPoints)
+			// --- НОВЫЙ БЛОК: ОБНОВЛЕНИЕ ПРОФИЛЯ ПОЛЬЗОВАТЕЛЯ ---
+			// После успешной отправки теста, запрашиваем обновленный профиль
+			if (results.passed) {
+				// Обновляем профиль только если тест пройден
+				try {
+					const profileResponse = await fetch(`${url}testa2/profile`, {
+						headers: { Authorization: `Bearer ${token}` },
+					})
+					const profileData = await profileResponse.json()
+					if (profileResponse.ok) {
+						// Сохраняем свежие данные пользователя в localStorage
+						localStorage.setItem('user', JSON.stringify(profileData.user))
+						console.log('✅ Профиль пользователя в localStorage обновлен!')
+					}
+				} catch (profileError) {
+					console.error('Не удалось обновить профиль пользователя после теста:', profileError)
+					// Это не критичная ошибка, приложение продолжит работу,
+					// но может показать старые данные до перезагрузки.
+				}
+			}
+			// --- КОНЕЦ НОВОГО БЛОКА ---
 
-			// Добавляем информацию об очках к результатам
+			const correctAnswers = results.score || 0
+			const earnedPoints = correctAnswers * pointsPerCorrectAnswer
+			if (isNaN(earnedPoints)) {
+				console.error('Ошибка расчета очков:', { correctAnswers, pointsPerCorrectAnswer })
+			}
+			const newTotalPoints = addPointsToTotal(earnedPoints || 0)
+
 			const enhancedResults = {
 				...results,
-				earnedPoints,
+				earnedPoints: earnedPoints || 0,
 				newTotalPoints,
-				pointsPerAnswer: POINTS_PER_CORRECT_ANSWER,
+				pointsPerAnswer: pointsPerCorrectAnswer,
 			}
 
 			setTestResults(enhancedResults)
@@ -260,8 +313,10 @@ const QuizPage = () => {
 
 	const closeModal = () => {
 		setShowResults(false)
-		// Перенаправляем на страницу /positions
-		navigate('/positions')
+		// Убираем window.location.reload()!
+		// Просто перенаправляем на главную страницу,
+		// где HomePage подхватит обновленные данные из localStorage.
+		navigate('/')
 	}
 
 	const retryTest = () => {
@@ -372,7 +427,7 @@ const QuizPage = () => {
 								fontStyle: 'italic',
 							}}
 						>
-							💎 Har bir to'g'ri javob uchun {POINTS_PER_CORRECT_ANSWER} ochko olasiz
+							💎 Har bir to'g'ri javob uchun {pointsPerCorrectAnswer} ochko olasiz
 						</p>
 					</div>
 
@@ -478,8 +533,8 @@ const QuizPage = () => {
 								<div className={modalStyles.scoreItem}>
 									<span className={modalStyles.label}>Olingan ballar:</span>
 									<span className={modalStyles.value}>
-										{testResults.totalQuestions * POINTS_PER_CORRECT_ANSWER} dan{' '}
-										{testResults.score * POINTS_PER_CORRECT_ANSWER}
+										{testResults.totalQuestions * pointsPerCorrectAnswer} dan{' '}
+										{testResults.score * pointsPerCorrectAnswer}
 									</span>
 								</div>
 
@@ -558,7 +613,7 @@ const QuizPage = () => {
 											<span>{result.correct ? '✅' : '❌'}</span>
 											{result.correct && (
 												<span style={{ fontSize: '12px', color: '#28a745' }}>
-													+{POINTS_PER_CORRECT_ANSWER}
+													+{pointsPerCorrectAnswer}
 												</span>
 											)}
 										</div>
@@ -569,7 +624,7 @@ const QuizPage = () => {
 
 						<div className={modalStyles.modalActions}>
 							<button className={modalStyles.primaryButton} onClick={closeModal}>
-								{testResults.canTakeNextTest ? 'Keyingi test' : 'Yopish'}
+								{testResults.canTakeNextTest ? 'Davom etish' : 'Yopish'}
 							</button>
 
 							{!testResults.passed && (
