@@ -1,22 +1,31 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Lock, CheckCircle, Play } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import styles from './PositionsPage.module.scss'
-import { useNavigate } from 'react-router-dom'
 import Loader from '../../components/Loader'
 
-const PositionsPage = () => {
-	const [levels, setLevels] = useState([])
+const PositionsPage = ({ url }) => {
+	const [levels, setLevels] = useState([]) // Теперь это будет динамически устанавливаемый массив
 	const [userProfile, setUserProfile] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
+	// Эти массивы будут хранить данные, полученные с сервера
+	const [allHududiyLevels, setAllHududiyLevels] = useState([])
+	const [allRespublikaLevels, setAllRespublikaLevels] = useState([])
+	const [allTumanLevels, setAllTumanLevels] = useState([])
 
 	const navigate = useNavigate()
+
+	const [searchParams] = useSearchParams()
+	const levelRoute = searchParams.get('route')
+
+	const currentLevelRef = useRef(null)
+	const hasScrolled = useRef(false)
 
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				// localStorage dan tokenni olish
 				const token = localStorage.getItem('token')
 				if (!token) {
 					setError('Avtorizatsiya talab qilinadi')
@@ -24,12 +33,10 @@ const PositionsPage = () => {
 					return
 				}
 
-				// Darajalar ro'yxatini olish
-				const levelsResponse = await fetch('https://kiymeshek.uz/testa2/levels')
+				const levelsResponse = await fetch(`${url}testa2/levels`)
 				const levelsData = await levelsResponse.json()
 
-				// Foydalanuvchi profilini olish
-				const profileResponse = await fetch('https://kiymeshek.uz/testa2/profile', {
+				const profileResponse = await fetch(`${url}testa2/profile`, {
 					headers: {
 						Authorization: `Bearer ${token}`,
 					},
@@ -37,50 +44,119 @@ const PositionsPage = () => {
 				const profileData = await profileResponse.json()
 
 				if (levelsResponse.ok && profileResponse.ok) {
-					setLevels(levelsData.levels)
+					// Сохраняем все полученные уровни в отдельные состояния
+					setAllTumanLevels(levelsData.tumanLevels)
+					setAllHududiyLevels(levelsData.hududiyLevels)
+					setAllRespublikaLevels(levelsData.respublikaLevels)
 					setUserProfile(profileData.user)
-					localStorage.setItem('levels', JSON.stringify(levelsData.levels))
 				} else {
 					setError("Ma'lumotlarni yuklashda xatolik")
 				}
 			} catch (err) {
 				setError("Server bilan bog'lanishda xatolik")
+				console.error(err) // Для отладки
 			} finally {
 				setLoading(false)
 			}
 		}
 
 		fetchData()
-	}, [])
+	}, [url]) // Зависимость от 'url' если она может меняться
 
-	// Daraja holatini aniqlash funksiyasi (yangi logika)
+	// Новый useEffect для установки `levels` в зависимости от `levelRoute`
+	useEffect(() => {
+		if (!loading) {
+			// Убедимся, что данные уже загружены
+			switch (levelRoute) {
+				case 'tumanLevels':
+					setLevels(allTumanLevels)
+					break
+				case 'hududiyLevels':
+					setLevels(allHududiyLevels)
+					break
+				case 'respublikaLevels':
+					setLevels(allRespublikaLevels)
+					break
+				default:
+					setLevels([]) // Если levelRoute не найден или пуст, устанавливаем пустой массив
+					console.warn('Неизвестный levelRoute:', levelRoute) // Для отладки
+					break
+			}
+		}
+	}, [levelRoute, loading, allTumanLevels, allHududiyLevels, allRespublikaLevels]) // Добавил all-массивы в зависимости
+
+	useEffect(() => {
+		hasScrolled.current = false
+	}, [levelRoute])
+
+	// Этот useEffect выполняет сам скролл, когда данные готовы.
+	useEffect(() => {
+		// Выполняем скролл только если:
+		// 1. Загрузка завершена.
+		// 2. Ссылка на текущий уровень установлена.
+		// 3. Мы еще не скроллили на этой странице.
+		if (!loading && currentLevelRef.current && !hasScrolled.current) {
+			// Даем небольшую задержку, чтобы DOM точно обновился
+			setTimeout(() => {
+				currentLevelRef.current.scrollIntoView({
+					behavior: 'smooth', // Плавный скролл
+					block: 'center', // Выровнять элемент по центру экрана
+				})
+				hasScrolled.current = true // Помечаем, что скролл выполнен
+			}, 100) // 100 миллисекунд
+		}
+	}, [loading, levels, userProfile])
+
+	// Daraja holatini aniqlash funksiyasi (обновленная логика)
 	const getLevelStatus = (level, index) => {
 		if (!userProfile || !userProfile.testProgress) {
-			return 'locked'
+			return index === 0 ? 'current' : 'locked'
 		}
 
-		const { currentLevel, completedTests } = userProfile.testProgress
-		const currentLevelIndex = levels.findIndex(l => l === currentLevel)
+		// completedTests - это массив СТРОК, например: ['Mutaxassis']
+		const { completedTests } = userProfile.testProgress
 
-		// Avval tekshiramiz - daraja o'tilgan bo'lsa (completedTests da bor)
-		if (completedTests && completedTests.some(test => test.level === level)) {
+		// 1. Проверяем, есть ли текущий уровень (строка) в массиве пройденных.
+		// БЫЛО: completedTests.some(test => test.level === level)
+		// СТАЛО:
+		if (completedTests.includes(level)) {
 			return 'completed'
 		}
 
-		// Agar bu joriy daraja bo'lsa - uni topshirish kerak (current emas, available)
-		if (level === currentLevel) {
-			return 'available' // currentLevel ni ham topshirish kerak
+		// 2. Находим индекс первого уровня, которого НЕТ в массиве пройденных.
+		// БЫЛО: levels.findIndex(lvl => !completedTests.some(test => test.level === lvl))
+		// СТАЛО:
+		const firstUncompletedIndex = levels.findIndex(lvl => !completedTests.includes(lvl))
+
+		// Если ни один не пройден, firstUncompletedIndex будет 0.
+		// Если пройден первый, он будет 1, и так далее.
+		// Если все пройдены, будет -1.
+		if (firstUncompletedIndex === -1) {
+			// Все уровни в этой категории пройдены, но `isCompleted` выше не сработал.
+			// Этот случай маловероятен, но для надежности можно вернуть 'locked'.
+			return 'locked'
 		}
 
-		// Agar bu joriy darajadan past bo'lsa va u completedTests da yo'q bo'lsa
-		if (index < currentLevelIndex) {
-			// Agar past daraja hali o'tilmagan bo'lsa - uni topshirish mumkin
-			return 'available'
+		if (index === firstUncompletedIndex) {
+			return 'current'
 		}
 
-		// Qolgan barcha darajalar (joriy darajadan yuqori) bloklangan
 		return 'locked'
 	}
+
+	useEffect(() => {
+		if (userProfile && levels.length > 0) {
+			console.log('Current levels array:', levelRoute, levels)
+			console.log('Completed tests:', userProfile.testProgress.completedTests)
+			console.log(
+				'Level statuses:',
+				levels.map((level, index) => ({
+					level,
+					status: getLevelStatus(level, index),
+				}))
+			)
+		}
+	}, [levels, userProfile, levelRoute])
 
 	// Daraja uchun tavsif olish
 	const getLevelDescription = (level, status) => {
@@ -94,15 +170,9 @@ const PositionsPage = () => {
 	}
 
 	const handleClick = (level, status) => {
-		if (status === 'current' || status === 'available') {
-			// Tanlangan darajani saqlash va testga o'tish
-			localStorage.setItem('selectedLevel', level)
-			navigate('/quiz')
-		}
-		// O'tilgan darajalarni qayta topshirish imkoniyati
-		else if (status === 'completed') {
-			localStorage.setItem('selectedLevel', level)
-			navigate('/quiz')
+		if (status === 'current' || status === 'available' || status === 'completed') {
+			localStorage.setItem('levels', level)
+			navigate(`/quiz?route=${levelRoute}`)
 		}
 	}
 
@@ -176,10 +246,16 @@ const PositionsPage = () => {
 	return (
 		<div className={`${styles.positionsContainer} middle`}>
 			<div className={`${styles.content} container`}>
+				{/* Здесь мы просто отображаем levels, и если он пуст, ничего не отображается,
+				    пока loading = true, отображается Loader */}
 				{levels.map((level, index) => {
 					const status = getLevelStatus(level, index)
 					return (
-						<div key={level} className={`${styles.positionCard} ${styles[status]}`}>
+						<div
+							ref={status === 'current' ? currentLevelRef : null}
+							key={level}
+							className={`${styles.positionCard} ${styles[status]}`}
+						>
 							<div className={styles.cardContent}>
 								<div className={styles.levelHeader}>
 									<h3>{level}</h3>
