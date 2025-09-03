@@ -42,7 +42,7 @@ function App() {
 		password: '',
 	})
 
-	const URL = 'http://kiymeshek.uz/'
+	const URL = 'https://kiymeshek.uz/'
 
 	const navigate = useNavigate()
 
