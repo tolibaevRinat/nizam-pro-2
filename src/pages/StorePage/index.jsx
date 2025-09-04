@@ -110,9 +110,51 @@ const StorePage = () => {
 		setShowModal(true)
 	}
 
+	// const confirmPurchase = () => {
+	// 	if (selectedItem && canAfford(selectedItem.price)) {
+	// 		setUserPoints(prev => prev - selectedItem.price)
+	// 		setPurchasedItems(prev => {
+	// 			const existingItemIndex = prev.findIndex(item => item.id === selectedItem.id)
+
+	// 			if (existingItemIndex !== -1) {
+	// 				// Товар уже есть, увеличиваем counter
+	// 				const updatedItems = [...prev]
+	// 				updatedItems[existingItemIndex] = {
+	// 					...updatedItems[existingItemIndex],
+	// 					counter: updatedItems[existingItemIndex].counter + 1,
+	// 				}
+	// 				return updatedItems
+	// 			} else {
+	// 				// Новый товар, добавляем с counter = 1
+	// 				return [
+	// 					...prev,
+	// 					{
+	// 						...selectedItem,
+	// 						counter: 1,
+	// 						purchaseDate: new Date().toISOString(),
+	// 						purchaseId: Date.now(),
+	// 					},
+	// 				]
+	// 			}
+	// 		})
+	// 		setShowModal(false)
+	// 		setSelectedItem(null)
+	// 	}
+	// }
+
 	const confirmPurchase = () => {
 		if (selectedItem && canAfford(selectedItem.price)) {
-			setUserPoints(prev => prev - selectedItem.price)
+			setUserPoints(prev => {
+				let newPoints = prev - selectedItem.price
+
+				// Если покупается товар с ID 1, добавляем 1000 баллов
+				if (selectedItem.id === 1) {
+					newPoints += 1000
+				}
+
+				return newPoints
+			})
+
 			setPurchasedItems(prev => {
 				const existingItemIndex = prev.findIndex(item => item.id === selectedItem.id)
 
